@@ -1,4 +1,4 @@
-package com.uamishop.ventas.domain;
+package ventas.domain;
 
 public class ProductoRef {
     private final String productoId;
@@ -14,4 +14,5 @@ public class ProductoRef {
     public String getProductoId() { return productoId; }
     public String getNombre() { return nombre; }
     public String getSku() { return sku; }
+
 }
