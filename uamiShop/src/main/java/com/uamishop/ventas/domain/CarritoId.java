@@ -1,6 +1,6 @@
 package ventas.domain;
 
-import java.io.Serializable;
+mport java.io.Serializable;
 import java.util.UUID;
 
 public class CarritoId implements Serializable {
@@ -20,5 +20,10 @@ public class CarritoId implements Serializable {
 
     public UUID getValue() {
         return value;
+    }
+    
+    @Override
+    public String toString() {
+        return value.toString();
     }
 }
