@@ -1,4 +1,4 @@
-package com.uamishop.ventas.domain;
+package ventas.domain;
 
 import com.uamishop.shared.domain.Money;
 import java.util.UUID;
