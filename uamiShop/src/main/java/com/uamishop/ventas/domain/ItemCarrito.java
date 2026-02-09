@@ -1,4 +1,4 @@
-package ventas.domain;
+package com.uamishop.ventas.domain;
 
 public class ItemCarrito {
 

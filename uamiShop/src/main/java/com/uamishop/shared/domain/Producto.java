@@ -1,4 +1,4 @@
-package shared.domain;
+package com.uamishop.shared.domain;
 
 public class Producto {
 
