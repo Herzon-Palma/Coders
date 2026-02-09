@@ -1,0 +1,11 @@
+shared/domain/DireccionEnvio.class
+pedidos/domain/DetallePedido.class
+com/uamishop/App.class
+com/uamishop/pedidos/domain/Pedido.class
+pedidos/domain/Pago.class
+pedidos/domain/Envio.class
+shared/domain/Money.class
+pedidos/domain/Edo.class
+ventas/domain/ItemCarrito.class
+shared/domain/Producto.class
+ventas/domain/Carrito.class
