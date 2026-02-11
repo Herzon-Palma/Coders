@@ -1,29 +1,28 @@
 package ventas.domain;
 
-mport java.io.Serializable;
+import jakarta.persistence.Embeddable;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import java.io.Serializable;
 import java.util.UUID;
 
+@Embeddable
+@Getter
+@EqualsAndHashCode
 public class CarritoId implements Serializable {
-    private final UUID value;
+    private UUID id;
 
-    private CarritoId(UUID value) {
-        this.value = value;
+    protected CarritoId() {}
+
+    public CarritoId(UUID id) {
+        this.id = id;
     }
 
-    public static CarritoId generar() {
+    public static CarritoId random() {
         return new CarritoId(UUID.randomUUID());
     }
     
-    public static CarritoId de(String uuid) {
-        return new CarritoId(UUID.fromString(uuid));
-    }
-
-    public UUID getValue() {
-        return value;
-    }
-    
-    @Override
-    public String toString() {
-        return value.toString();
+    public static CarritoId of(UUID id) {
+        return new CarritoId(id);
     }
 }
