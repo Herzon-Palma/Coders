@@ -1,0 +1,22 @@
+package com.uamishop.shared.domain;
+
+import jakarta.persistence.Embeddable;
+import java.io.Serializable;
+import java.util.UUID;
+
+@Embeddable
+public class ClienteId implements Serializable {
+    private UUID id;
+
+    protected ClienteId() {}
+
+    public ClienteId(UUID id) {
+        this.id = id;
+    }
+
+    public UUID getValue() {
+        return id;
+    }
+    
+    // Equals y HashCode...
+}
