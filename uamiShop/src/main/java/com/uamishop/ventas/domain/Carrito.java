@@ -2,130 +2,101 @@ package com.uamishop.ventas.domain;
 
 import com.uamishop.shared.domain.Money;
 import com.uamishop.shared.exception.DomainException;
+import jakarta.persistence.*;
+import lombok.Getter;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
+@Entity
+@Table(name = "carritos")
+@Getter
 public class Carrito {
-    private final CarritoId id;
-    private final String clienteId;
+
+    @EmbeddedId
+    @AttributeOverride(name = "id", column = @Column(name = "id"))
+    private CarritoId id;
+
+    @Column(name = "cliente_id")
+    private UUID clienteId;
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JoinColumn(name = "carrito_id")
     private List<ItemCarrito> items;
+
+    @Enumerated(EnumType.STRING)
     private EstadoCarrito estado;
+
     private LocalDateTime fechaCreacion;
+    private LocalDateTime fechaActualizacion;
 
-    public Carrito(String clienteId) {
-        this.id = CarritoId.generar();
-        this.clienteId = clienteId;
-        this.items = new ArrayList<>();
-        this.estado = EstadoCarrito.ACTIVO;
-        this.fechaCreacion = LocalDateTime.now();
+    protected Carrito() {}
+
+    public static Carrito crear(UUID clienteId) {
+        Carrito c = new Carrito();
+        c.id = CarritoId.random();
+        c.clienteId = clienteId;
+        c.items = new ArrayList<>();
+        c.estado = EstadoCarrito.ACTIVO;
+        c.fechaCreacion = LocalDateTime.now();
+        c.fechaActualizacion = LocalDateTime.now();
+        return c;
     }
 
-    public void agregarProducto(ProductoRef producto, int cantidad, Money precio) {
-        if (this.estado != EstadoCarrito.ACTIVO) {
-            throw new DomainException("El carrito no esta activo");
-        }
 
-        if (cantidad <= 0) {
-            throw new DomainException("La cantidad debe ser mayor a 0");
-        }
+    public void agregarProducto(ProductoRef producto, int cantidad) {
+        validarEstadoActivo();
+        
+        Optional<ItemCarrito> itemExistente = items.stream()
+                .filter(i -> i.getProductoRef().getProductoId().equals(producto.getProductoId()))
+                .findFirst();
 
-        Optional<ItemCarrito> itemOpt = buscarItem(producto.getProductoId());
-        int cantidadActual = itemOpt.map(ItemCarrito::getCantidad).orElse(0);
-
-        if (cantidadActual + cantidad > 10) {
-            throw new DomainException("Maximo 10 unidades por producto");
-        }
-
-        if (itemOpt.isPresent()) {
-            itemOpt.get().aumentarCantidad(cantidad);
+        if (itemExistente.isPresent()) {
+            itemExistente.get().incrementarCantidad(cantidad);
         } else {
-            if (items.size() >= 20) {
-                throw new DomainException("Limite de 20 productos diferentes alcanzado");
-            }
-            items.add(new ItemCarrito(producto, cantidad, precio));
+            if (items.size() >= 20) throw new DomainException("Carrito lleno (max 20 items diferentes)");
+            items.add(new ItemCarrito(producto, cantidad));
         }
-    }
-
-    public void cambiarCantidad(String productoId, int nuevaCantidad) {
-        if (this.estado != EstadoCarrito.ACTIVO) {
-            throw new DomainException("No se puede modificar en checkout");
-        }
-        
-        if (nuevaCantidad <= 0) {
-            throw new DomainException("Use eliminarProducto para quitar items");
-        }
-        
-        if (nuevaCantidad > 10) {
-            throw new DomainException("Maximo 10 unidades permitidas");
-        }
-
-        buscarItem(productoId).ifPresent(item -> item.setCantidad(nuevaCantidad));
-    }
-
-    public void eliminarProducto(String productoId) {
-        if (this.estado != EstadoCarrito.ACTIVO) {
-            throw new DomainException("Carrito bloqueado");
-        }
-        
-        ItemCarrito item = buscarItem(productoId)
-            .orElseThrow(() -> new DomainException("El producto no está en el carrito"));
-        
-        items.remove(item);
+        this.fechaActualizacion = LocalDateTime.now();
     }
 
     public void vaciar() {
-        if (this.estado != EstadoCarrito.ACTIVO) {
-            throw new DomainException("No se puede vaciar durante el checkout");
-        }
-        items.clear();
+        validarEstadoActivo();
+        this.items.clear();
+        this.fechaActualizacion = LocalDateTime.now();
     }
 
-    public void checkout() {
-        if (this.estado != EstadoCarrito.ACTIVO) {
-            throw new DomainException("El estado debe ser ACTIVO");
+    public Money calcularTotal() {
+        return items.stream()
+                .map(ItemCarrito::calcularSubtotal)
+                .reduce(Money.zero(), Money::sumar);
+    }
+
+    public void iniciarCheckout() {
+        validarEstadoActivo();
+        if (items.isEmpty()) throw new DomainException("El carrito está vacío");
+        
+        Money total = calcularTotal();
+        if (!total.esMayorQue(Money.pesos(50))) {
+            throw new DomainException("El total debe ser mayor a $50 para procesar la compra");
         }
         
-        if (items.isEmpty()) {
-            throw new DomainException("El carrito está vacío");
-        }
-
-        Money total = total();
-        if (total.esMenorQue(new Money(50))) {
-            throw new DomainException("El monto mínimo es $50");
-        }
-
         this.estado = EstadoCarrito.EN_CHECKOUT;
+        this.fechaActualizacion = LocalDateTime.now();
     }
 
-    public void finalizarCompra() {
-        if (this.estado != EstadoCarrito.EN_CHECKOUT) {
-            throw new DomainException("Estado incorrecto para finalizar");
+    private void validarEstadoActivo() {
+        if (this.estado != EstadoCarrito.ACTIVO) {
+            throw new DomainException("El carrito no está activo. Estado actual: " + this.estado);
         }
-        this.estado = EstadoCarrito.COMPLETADO;
-    }
-
-    public void cancelarCheckout() {
-        if (this.estado != EstadoCarrito.EN_CHECKOUT) {
-            throw new DomainException("Solo se puede cancelar durante checkout");
-        }
-        this.estado = EstadoCarrito.ABANDONADO;
-    }
-
-    public Money total() {
-        return items.stream()
-                .map(ItemCarrito::subtotal)
-                .reduce(new Money(0), Money::sumar);
-    }
-
-    private Optional<ItemCarrito> buscarItem(String pid) {
-        return items.stream()
-                .filter(i -> i.getProducto().getProductoId().equals(pid))
-                .findFirst();
     }
     
-    public CarritoId getId() { return id; }
-    public EstadoCarrito getEstado() { return estado; }
-    public List<ItemCarrito> getItems() { return new ArrayList<>(items); }
+    // Getter defensivo
+    public List<ItemCarrito> getItems() {
+        return Collections.unmodifiableList(items);
+    }
 }
