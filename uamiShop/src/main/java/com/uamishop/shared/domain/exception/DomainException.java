@@ -1,4 +1,4 @@
-package com.uamishop.shared.domain;
+package com.uamishop.shared.domain.exception;
 
 public class DomainException extends RuntimeException {
     public DomainException(String message) {

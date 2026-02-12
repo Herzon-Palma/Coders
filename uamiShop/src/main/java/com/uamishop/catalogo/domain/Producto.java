@@ -4,6 +4,7 @@ import com.uamishop.shared.domain.Money;
 import java.util.ArrayList;
 import java.util.List;
 import jakarta.persistence.*;
+import com.uamishop.catalogo.controller.dto.ProductoResponse;
 
 
 @Entity
@@ -84,4 +85,51 @@ public class Producto {
             throw new RuntimeException("Precio debe ser mayor a cero");
         this.disponible = true;
     }
+
+    public void desactivar() {
+        this.disponible = false;
+    }
+
+    public void removerImagen(Imagen imagen) {
+        this.imagenes.remove(imagen);
+    }
+
+    public void actualizarInformacion(String nombre, String descripcion) {
+        // RN-CAT-01: Nombre entre 3 y 100 caracteres
+        if (nombre == null || nombre.length() < 3 || nombre.length() > 100) 
+            throw new RuntimeException("Nombre inválido");
+        // RN-CAT-03: Descripción máx 500
+        if (descripcion != null && descripcion.length() > 500)
+            throw new RuntimeException("Descripción demasiado larga");
+
+        this.nombre = nombre;
+        this.descripcion = descripcion;
+    }
+
+    public ProductoResponse toResponse() {
+        return new ProductoResponse(
+            this.id.valor(),
+            this.nombre,
+            this.descripcion,
+            this.precio.cantidad(),
+            this.precio.moneda(),
+            this.categoriaId.valor()
+        );
+    }
+
+    public void actualizar(String nombre, String descripcion, Money precio) {
+        actualizarInformacion(nombre, descripcion);
+        cambiarPrecio(precio);
+    }
+
+    // Getters necesarios para JPA y pruebas
+    public Productoid getId() { return id; }
+    public String getNombre() { return nombre; }
+    public String getDescripcion() { return descripcion; }
+    public Money getPrecio() { return precio; }
+    public Categoriaid getCategoriaId() { return categoriaId; }
+    public List<Imagen> getImagenes() { return imagenes; }
+    public boolean isDisponible() { return disponible; }
+
+
 }

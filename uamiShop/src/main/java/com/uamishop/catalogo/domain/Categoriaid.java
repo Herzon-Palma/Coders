@@ -17,4 +17,6 @@ public record Categoriaid(UUID valor) implements Serializable {
     public UUID getValue() {
         return valor;
     }
+
+    
 }
