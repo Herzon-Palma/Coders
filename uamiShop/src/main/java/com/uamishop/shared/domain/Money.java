@@ -1,32 +1,38 @@
 package com.uamishop.shared.domain;
 
+import java.math.BigDecimal;
 
 
-public class Money {
-    private double amount;
-    private String currency;
+public record Money(BigDecimal cantidad, String moneda) {
+    public static Money zero() {
+        return new Money(BigDecimal.ZERO, "MXN");
+    }
 
-    public Money(double amount, String currency) {
-        if(amount < 0 || currency == null || currency.isEmpty()) {
-            throw new IllegalArgumentException("El monto y la moneda no pueden ser nulos o vacíos");
-        }
-        this.amount = amount;
-        this.currency = currency;
+    public static Money pesos(double cantidad) {
+        return new Money(BigDecimal.valueOf(cantidad), "MXN");
+    }
     
+    public Money multiplicar(int factor) { // Soluciona error en ItemCarrito
+        return new Money(this.cantidad.multiply(BigDecimal.valueOf(factor)), this.moneda);
     }
 
-    public Money add(Money other) {
-        if (!this.currency.equals(other.currency)) {
-            throw new IllegalArgumentException("No se pueden sumar cantidades con diferentes monedas");
+    public Money sumar(Money otro) {
+        validarMoneda(otro);
+        return new Money(this.cantidad.add(otro.cantidad), this.moneda);
+    }
+
+    public Money restar(Money otro) {
+        validarMoneda(otro);
+        BigDecimal resultado = this.cantidad.subtract(otro.cantidad);
+        if (resultado.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("El resultado de una resta no puede ser negativo"); // RN-VO-02
         }
-        return new Money(this.amount + other.amount, this.currency);
+        return new Money(resultado, this.moneda);
     }
 
-    public double getmonto() {
-        return amount;
-    }
-
-    public String getCurrency() {
-        return currency;
+    private void validarMoneda(Money otro) {
+        if (!this.moneda.equals(otro.moneda)) {
+            throw new IllegalArgumentException("No se pueden sumar montos de diferentes monedas"); // RN-VO-01
+        }
     }
 }
