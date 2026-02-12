@@ -3,15 +3,36 @@ package com.uamishop.catalogo.domain;
 import com.uamishop.shared.domain.Money;
 import java.util.ArrayList;
 import java.util.List;
+import jakarta.persistence.*;
 
+
+@Entity
+@Table(name = "productos")
 public class Producto {
-    private final Productoid id;
+    //Necesitamos un ID para cada producto, lo generaremos automáticamente
+    @EmbeddedId
+    private Productoid id;
+
     private String nombre;
     private String descripcion;
+    
+    @Embedded
     private Money precio;
+
+    @Embedded
+    @AttributeOverride(name = "valor", column = @Column(name = "categoria_id"))
     private final Categoriaid categoriaId;
+
+    @ElementCollection
+    @CollectionTable(name = "producto_imagenes", joinColumns = @JoinColumn(name = "producto_id"))
     private List<Imagen> imagenes;
+
     private boolean disponible;
+
+    private Producto() {
+        // Esto lo ocupa JPA, no lo usaremos directamentte, y es necesario para evitar error de final en categoriaId
+        this.categoriaId = null; // Necesario para evitar error de final
+    }
 
     private Producto(Productoid id, String nombre, String descripcion, Money precio, Categoriaid categoriaId) {
         this.id = id;
