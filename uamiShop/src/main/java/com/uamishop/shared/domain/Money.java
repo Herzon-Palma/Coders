@@ -4,6 +4,12 @@ import java.math.BigDecimal;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.Column;
 
+/**
+ * Value Object compartido: Money.
+ * - RN-VO-01: No se pueden sumar/restar monedas con distinta divisa.
+ * - RN-VO-02: No se permiten resultados negativos en resta.
+ */
+
 @Embeddable
 public record Money(@Column(name = "cantidad") BigDecimal cantidad, @Column(name = "moneda") String moneda) {
     public static Money zero() {
@@ -13,7 +19,7 @@ public record Money(@Column(name = "cantidad") BigDecimal cantidad, @Column(name
     public static Money pesos(double cantidad) {
         return new Money(BigDecimal.valueOf(cantidad), "MXN");
     }
-    
+
     public Money multiplicar(int factor) { // Soluciona error en ItemCarrito
         return new Money(this.cantidad.multiply(BigDecimal.valueOf(factor)), this.moneda);
     }
