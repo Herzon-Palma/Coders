@@ -39,5 +39,4 @@ public class CarritoController {
     }
 }
 
-// DTO para la transferencia de datos
 public record ProductoDTO(UUID productoId, String nombre, int cantidad, Money precio) {}
