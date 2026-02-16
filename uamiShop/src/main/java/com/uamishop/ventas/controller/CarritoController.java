@@ -17,22 +17,26 @@ public class CarritoController {
         this.carritoService = carritoService;
     }
 
+    // GET /api/carritos/cliente/{clienteId}
     @GetMapping("/cliente/{clienteId}")
     public ResponseEntity<Carrito> getCarrito(@PathVariable UUID clienteId) {
         return ResponseEntity.ok(carritoService.obtenerOCrearCarrito(clienteId));
     }
 
+    // POST /api/carritos/{id}/productos
     @PostMapping("/{id}/productos")
     public ResponseEntity<Carrito> agregar(@PathVariable UUID id, @RequestBody ProductoDTO dto) {
         return ResponseEntity.ok(carritoService.agregarProducto(id, dto));
     }
 
+    // DELETE /api/carritos/{id}/productos/{productoId}
     @DeleteMapping("/{id}/productos/{productoId}")
     public ResponseEntity<Void> eliminar(@PathVariable UUID id, @PathVariable UUID productoId) {
         carritoService.eliminarProducto(id, productoId);
         return ResponseEntity.noContent().build();
     }
 
+    // POST /api/carritos/{id}/checkout
     @PostMapping("/{id}/checkout")
     public ResponseEntity<Carrito> checkout(@PathVariable UUID id) {
         return ResponseEntity.ok(carritoService.finalizarCompra(id));
