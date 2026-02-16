@@ -1,44 +1,46 @@
 package com.uamishop.ventas.domain;
 
 import com.uamishop.shared.domain.Money;
-import com.uamishop.shared.exception.DomainException;
+import com.uamishop.ventas.domain.exception.CarritoException;
 import jakarta.persistence.*;
 import java.util.UUID;
 
 @Entity
 @Table(name = "items_carrito")
 public class ItemCarrito {
+    
     @Id
-    private UUID id = UUID.randomUUID();
-    
-    private UUID productoId; //Referencia al Bounded Context de Catálogo
-    private String nombreProducto;
+    @GeneratedValue
+    private Long id; 
+
+    @Embedded
+    private ProductoRef producto;
+
     private int cantidad;
-    
-    @Embedded //JPA aplana los campos de Money
+
+    @Embedded
+    @AttributeOverrides({
+        @AttributeOverride(name = "amount", column = @Column(name = "precio_amount")),
+        @AttributeOverride(name = "currency", column = @Column(name = "precio_currency"))
+    })
     private Money precioUnitario;
 
     protected ItemCarrito() {}
 
-    public ItemCarrito(UUID productoId, String nombre, int cantidad, Money precio) {
-        this.productoId = productoId;
-        this.nombreProducto = nombre;
+    public ItemCarrito(ProductoRef producto, int cantidad, Money precio) {
+        this.producto = producto;
         this.precioUnitario = precio;
-        setCantidad(cantidad); //Setter para validar
+        setCantidad(cantidad);
     }
 
-    //Regla de negocio
     public void setCantidad(int cantidad) {
-        if (cantidad <= 0) throw new DomainException("La cantidad debe ser mayor a 0");
+        if (cantidad <= 0) throw new CarritoException("Cantidad debe ser positiva");
         this.cantidad = cantidad;
     }
+    
+    public void aumentarCantidad(int n) { this.cantidad += n; }
 
-    public void aumentarCantidad(int extra) {
-        setCantidad(this.cantidad + extra);
-    }
-
-    public UUID getProductoId() { return productoId; }
+    public ProductoRef getProducto() { return producto; }
     public int getCantidad() { return cantidad; }
     public Money getPrecioUnitario() { return precioUnitario; }
-    public String getNombreProducto() { return nombreProducto; }
 }
