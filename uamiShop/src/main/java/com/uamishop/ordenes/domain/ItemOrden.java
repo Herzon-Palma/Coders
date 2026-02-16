@@ -35,5 +35,4 @@ public class ItemOrden {
         this.subtotal = precio.multiply(cantidad);
     }
     
-    // Getters
 }
