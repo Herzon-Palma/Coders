@@ -20,6 +20,9 @@ public class Carrito {
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "carrito_id") 
     private List<ItemCarrito> items = new ArrayList<>();
+
+    @Enumerated(EnumType.STRING)
+    private EstadoCarrito estado;
     
     private String estado; //ACTIVO, CHECKOUT
 
@@ -27,7 +30,7 @@ public class Carrito {
 
     public Carrito(UUID clienteId) {
         this.clienteId = clienteId;
-        this.estado = "ACTIVO";
+        this.estado = EstadoCarrito.ACTIVO;
     }
 
     //LÓGICA DE NEGOCIO (DDD)
@@ -64,16 +67,18 @@ public class Carrito {
 
     public void iniciarCheckout() {
         if (items.isEmpty()) throw new DomainException("No se puede hacer checkout de un carrito vacío");
-        this.estado = "CHECKOUT";
+        this.estado = EstadoCarrito.CHECKOUT;
     }
 
     private void verificarEstadoEditable() {
-        if (!"ACTIVO".equals(this.estado)) {
+        if (this.estado != EstadoCarrito.ACTIVO) {
             throw new DomainException("El carrito ya no puede ser modificado");
         }
     }
 
+    //Getters
     public UUID getId() { return id; }
     public List<ItemCarrito> getItems() { return items; }
     public String getEstado() { return estado; }
+    public EstadoCarrito getEstado() { return estado; }
 }
