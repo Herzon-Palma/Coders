@@ -1,15 +1,15 @@
 package com.uamishop.ventas.controller;
 
-import com.uamishop.ventas.controller.dto.AgregarItemRequest;
+import com.uamishop.shared.domain.ClienteId;
 import com.uamishop.ventas.domain.Carrito;
 import com.uamishop.ventas.service.CarritoService;
+import com.uamishop.ventas.controller.dto.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/ventas/carritos")
+@RequestMapping("/api/carritos")
 public class CarritoController {
 
     private final CarritoService carritoService;
@@ -19,40 +19,37 @@ public class CarritoController {
     }
 
     @PostMapping
-    public ResponseEntity<Carrito> iniciarSesionCarrito(@RequestParam UUID clienteId) {
-        Carrito carrito = carritoService.crearOObtenerCarrito(clienteId);
-        return ResponseEntity.ok(carrito);
+    public ResponseEntity<Carrito> crear(@RequestBody UUID clienteId) {
+        return ResponseEntity.ok(carritoService.crear(new ClienteId(clienteId)));
     }
 
-    @PostMapping("/{id}/items")
-    public ResponseEntity<String> agregarItem(
-            @PathVariable UUID id,
-            @RequestBody AgregarItemRequest request) {
-        
-        carritoService.agregarProducto(
-                id,
-                request.productoId(),
-                request.nombre(),
-                request.precio(),
-                request.cantidad()
-        );
-        return ResponseEntity.ok("Producto agregado correctamente");
+    @GetMapping("/{id}")
+    public ResponseEntity<Carrito> obtener(@PathVariable UUID id) {
+        return ResponseEntity.ok(carritoService.obtenerCarrito(id));
+    }
+
+    @PostMapping("/{id}/productos")
+    public ResponseEntity<Carrito> agregarProducto(@PathVariable UUID id, @RequestBody AddProductoRequest request) {
+        return ResponseEntity.ok(carritoService.agregarProducto(
+                id, request.getProducto(), request.getCantidad(), request.getPrecio()));
+    }
+
+    @PatchMapping("/{id}/productos/{productoId}")
+    public ResponseEntity<Carrito> modificarCantidad(
+            @PathVariable UUID id, 
+            @PathVariable UUID productoId, 
+            @RequestBody int cantidad) {
+        return ResponseEntity.ok(carritoService.modificarCantidad(id, productoId, cantidad));
+    }
+
+    @DeleteMapping("/{id}/productos/{productoId}")
+    public ResponseEntity<Void> eliminarProducto(@PathVariable UUID id, @PathVariable UUID productoId) {
+        carritoService.eliminarProducto(id, productoId);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/checkout")
-    public ResponseEntity<String> realizarCheckout(@PathVariable UUID id) {
-        carritoService.iniciarCheckout(id);
-        return ResponseEntity.ok("Checkout iniciado correctamente");
-    }
-    
-    @GetMapping("/{id}")
-    public ResponseEntity<Carrito> obtenerCarrito(@PathVariable UUID id) {
-        return ResponseEntity.ok(carritoService.obtenerPorId(id));
-    }
-    
-    // Manejo de excepciones básico para respuesta HTTP
-    @ExceptionHandler(com.uamishop.shared.exception.DomainException.class)
-    public ResponseEntity<String> handleDomainException(Exception ex) {
-        return ResponseEntity.badRequest().body(ex.getMessage());
+    public ResponseEntity<Carrito> iniciarCheckout(@PathVariable UUID id) {
+        return ResponseEntity.ok(carritoService.iniciarCheckout(id));
     }
 }
