@@ -1,48 +1,28 @@
-package ventas.domain;
-
-import com.uamishop.shared.domain.Money;
-import com.uamishop.shared.exception.DomainException;
-import jakarta.persistence.*;
-import lombok.Getter;
-
-import java.util.UUID;
-
 @Entity
-@Table(name = "items_carrito")
-@Getter
 public class ItemCarrito {
-
     @Id
-    private UUID id;
-
+    private UUID id = UUID.randomUUID();
+    private UUID productoId;
+    private String nombreProducto;
+    private int cantidad;
     @Embedded
-    private ProductoRef productoRef;
+    private Money precioUnitario;
 
-    private Integer cantidad;
+    protected ItemCarrito() {}
 
-    protected ItemCarrito() {} // JPA
-
-    public ItemCarrito(ProductoRef productoRef, Integer cantidad) {
-        this.id = UUID.randomUUID();
-        this.productoRef = productoRef;
-        setCantidad(cantidad);
-    }
-
-    public void incrementarCantidad(Integer extra) {
-        setCantidad(this.cantidad + extra);
-    }
-
-    public void actualizarCantidad(Integer nuevaCantidad) {
-        setCantidad(nuevaCantidad);
-    }
-
-    private void setCantidad(Integer cantidad) {
-        if (cantidad <= 0) throw new DomainException("La cantidad debe ser mayor a 0");
-        if (cantidad > 10) throw new DomainException("Máximo 10 unidades por producto");
+    public ItemCarrito(UUID productoId, String nombreProducto, int cantidad, Money precio) {
+        this.productoId = productoId;
+        this.nombreProducto = nombreProducto;
         this.cantidad = cantidad;
+        this.precioUnitario = precio;
     }
 
-    public Money calcularSubtotal() {
-        return productoRef.getPrecioUnitario().multiplicar(cantidad);
+    public void actualizarCantidad(int nuevaCantidad) {
+        if (nuevaCantidad <= 0) throw new DomainException("La cantidad debe ser mayor a 0");
+        this.cantidad = nuevaCantidad;
+    }
+
+    public Money subtotal() {
+        return new Money(precioUnitario.amount().multiply(BigDecimal.valueOf(cantidad)), precioUnitario.currency());
     }
 }
