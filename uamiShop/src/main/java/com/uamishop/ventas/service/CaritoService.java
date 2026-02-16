@@ -12,50 +12,34 @@ import java.util.UUID;
 @Service
 @Transactional
 public class CarritoService {
+    private final CarritoRepository repository;
 
-    private final CarritoJpaRepository repository;
-
-    public CarritoService(CarritoJpaRepository repository) {
+    public CarritoService(CarritoRepository repository) {
         this.repository = repository;
     }
 
-    public Carrito crear(ClienteId clienteId) {
-        Carrito carrito = new Carrito(clienteId); // Estado ACTIVO por defecto 
+    public Carrito obtenerOCrearCarrito(UUID clienteId) {
+        return repository.findByClienteIdAndEstado(clienteId, "ACTIVO")
+                .orElseGet(() -> repository.save(new Carrito(clienteId)));
+    }
+
+    public Carrito agregarProducto(UUID carritoId, ProductoDTO dto) {
+        Carrito carrito = repository.findById(carritoId)
+                .orElseThrow(() -> new RuntimeException("Carrito no encontrado"));
+        
+        carrito.agregarProducto(dto.productoId(), dto.nombre(), dto.cantidad(), dto.precio());
         return repository.save(carrito);
     }
 
-    public Carrito obtenerCarrito(UUID id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new CarritoException("Carrito no encontrado")); [cite: 166]
-    }
-
-    public Carrito agregarProducto(UUID id, ProductoRef producto, int cantidad, Money precio) {
-        Carrito carrito = obtenerCarrito(id);
-        carrito.agregarProducto(producto, cantidad, precio); // Reglas RN-VEN-01 a 04 
-        return repository.save(carrito);
-    }
-
-    public Carrito modificarCantidad(UUID id, UUID productoId, int nuevaCantidad) {
-        Carrito carrito = obtenerCarrito(id);
-        carrito.modificarCantidad(productoId, nuevaCantidad); // Regla RN-VEN-05 y 06 
-        return repository.save(carrito);
-    }
-
-    public Carrito eliminarProducto(UUID id, UUID productoId) {
-        Carrito carrito = obtenerCarrito(id);
-        carrito.eliminarProducto(productoId); // Regla RN-VEN-07 y 08 
-        return repository.save(carrito);
-    }
-
-    public void vaciar(UUID id) {
-        Carrito carrito = obtenerCarrito(id);
-        carrito.vaciar(); // Regla RN-VEN-09 
+    public void eliminarProducto(UUID carritoId, UUID productoId) {
+        Carrito carrito = repository.findById(carritoId).orElseThrow();
+        carrito.getItems().removeIf(item -> item.getProductoId().equals(productoId));
         repository.save(carrito);
     }
 
-    public Carrito iniciarCheckout(UUID id) {
-        Carrito carrito = obtenerCarrito(id);
-        carrito.iniciarCheckout(); // Reglas RN-VEN-10 a 12 
+    public Carrito finalizarCompra(UUID carritoId) {
+        Carrito carrito = repository.findById(carritoId).orElseThrow();
+        carrito.iniciarCheckout();
         return repository.save(carrito);
     }
 }
