@@ -11,45 +11,33 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/carritos")
 public class CarritoController {
-
     private final CarritoService carritoService;
 
     public CarritoController(CarritoService carritoService) {
         this.carritoService = carritoService;
     }
 
-    @PostMapping
-    public ResponseEntity<Carrito> crear(@RequestBody UUID clienteId) {
-        return ResponseEntity.ok(carritoService.crear(new ClienteId(clienteId)));
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Carrito> obtener(@PathVariable UUID id) {
-        return ResponseEntity.ok(carritoService.obtenerCarrito(id));
+    @GetMapping("/cliente/{clienteId}")
+    public ResponseEntity<Carrito> getCarrito(@PathVariable UUID clienteId) {
+        return ResponseEntity.ok(carritoService.obtenerOCrearCarrito(clienteId));
     }
 
     @PostMapping("/{id}/productos")
-    public ResponseEntity<Carrito> agregarProducto(@PathVariable UUID id, @RequestBody AddProductoRequest request) {
-        return ResponseEntity.ok(carritoService.agregarProducto(
-                id, request.getProducto(), request.getCantidad(), request.getPrecio()));
-    }
-
-    @PatchMapping("/{id}/productos/{productoId}")
-    public ResponseEntity<Carrito> modificarCantidad(
-            @PathVariable UUID id, 
-            @PathVariable UUID productoId, 
-            @RequestBody int cantidad) {
-        return ResponseEntity.ok(carritoService.modificarCantidad(id, productoId, cantidad));
+    public ResponseEntity<Carrito> agregar(@PathVariable UUID id, @RequestBody ProductoDTO dto) {
+        return ResponseEntity.ok(carritoService.agregarProducto(id, dto));
     }
 
     @DeleteMapping("/{id}/productos/{productoId}")
-    public ResponseEntity<Void> eliminarProducto(@PathVariable UUID id, @PathVariable UUID productoId) {
+    public ResponseEntity<Void> eliminar(@PathVariable UUID id, @PathVariable UUID productoId) {
         carritoService.eliminarProducto(id, productoId);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/checkout")
-    public ResponseEntity<Carrito> iniciarCheckout(@PathVariable UUID id) {
-        return ResponseEntity.ok(carritoService.iniciarCheckout(id));
+    public ResponseEntity<Carrito> checkout(@PathVariable UUID id) {
+        return ResponseEntity.ok(carritoService.finalizarCompra(id));
     }
 }
+
+// DTO para la transferencia de datos
+public record ProductoDTO(UUID productoId, String nombre, int cantidad, Money precio) {}
