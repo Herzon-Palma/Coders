@@ -1,10 +1,9 @@
 package com.uamishop.ventas.service;
 
-import com.uamishop.shared.domain.ClienteId;
 import com.uamishop.shared.domain.Money;
-import com.uamishop.ventas.domain.*;
-import com.uamishop.ventas.domain.exception.CarritoException;
-import com.uamishop.ventas.repository.CarritoJpaRepository;
+import com.uamishop.shared.exception.DomainException;
+import com.uamishop.ventas.domain.Carrito;
+import com.uamishop.ventas.repository.CarritoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
@@ -13,49 +12,39 @@ import java.util.UUID;
 @Transactional
 public class CarritoService {
 
-    private final CarritoJpaRepository repository;
+    private final CarritoRepository repository;
 
-    public CarritoService(CarritoJpaRepository repository) {
+    public CarritoService(CarritoRepository repository) {
         this.repository = repository;
     }
 
-    public Carrito crear(ClienteId clienteId) {
-        Carrito carrito = new Carrito(clienteId); //Estado ACTIVO por defecto 
+    public Carrito obtenerCarritoActivo(UUID clienteId) {
+        return repository.findByClienteIdAndEstado(clienteId, "ACTIVO")
+                .orElseGet(() -> repository.save(new Carrito(clienteId)));
+    }
+
+    public Carrito agregarProducto(UUID carritoId, UUID prodId, String nombre, int cantidad, double precio) {
+        Carrito carrito = repository.findById(carritoId)
+                .orElseThrow(() -> new DomainException("Carrito no encontrado"));
+        
+        carrito.agregarProducto(prodId, nombre, cantidad, Money.of(precio));
+        
         return repository.save(carrito);
     }
 
-    public Carrito obtenerCarrito(UUID id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new CarritoException("Carrito no encontrado")); [cite: 166]
-    }
-
-    public Carrito agregarProducto(UUID id, ProductoRef producto, int cantidad, Money precio) {
-        Carrito carrito = obtenerCarrito(id);
-        carrito.agregarProducto(producto, cantidad, precio); //RN-VEN-01 a 04 
-        return repository.save(carrito);
-    }
-
-    public Carrito modificarCantidad(UUID id, UUID productoId, int nuevaCantidad) {
-        Carrito carrito = obtenerCarrito(id);
-        carrito.modificarCantidad(productoId, nuevaCantidad); //RN-VEN-05 y 06 
-        return repository.save(carrito);
-    }
-
-    public Carrito eliminarProducto(UUID id, UUID productoId) {
-        Carrito carrito = obtenerCarrito(id);
-        carrito.eliminarProducto(productoId); //RN-VEN-07 y 08 
-        return repository.save(carrito);
-    }
-
-    public void vaciar(UUID id) {
-        Carrito carrito = obtenerCarrito(id);
-        carrito.vaciar(); //RN-VEN-09 
+    public void eliminarProducto(UUID carritoId, UUID productoId) {
+        Carrito carrito = repository.findById(carritoId)
+                .orElseThrow(() -> new DomainException("Carrito no encontrado"));
+        
+        carrito.eliminarProducto(productoId);
         repository.save(carrito);
     }
 
-    public Carrito iniciarCheckout(UUID id) {
-        Carrito carrito = obtenerCarrito(id);
-        carrito.iniciarCheckout(); //RN-VEN-10 a 12 
+    public Carrito checkout(UUID carritoId) {
+        Carrito carrito = repository.findById(carritoId)
+                .orElseThrow(() -> new DomainException("Carrito no encontrado"));
+        
+        carrito.iniciarCheckout();
         return repository.save(carrito);
     }
 }
