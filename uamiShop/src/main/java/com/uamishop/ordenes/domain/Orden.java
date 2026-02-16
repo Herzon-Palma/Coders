@@ -57,9 +57,7 @@ public class Orden {
         this.historialEstados = new ArrayList<>();
     }
 
-    // ========================================================================
     // FACTORY METHOD
-    // ========================================================================
 
     /**
      * Crea una nueva Orden en estado PENDIENTE.
@@ -104,9 +102,7 @@ public class Orden {
                 EstadoOrden.PENDIENTE, LocalDateTime.now());
     }
 
-    // ========================================================================
     // TRANSICIONES DE ESTADO
-    // ========================================================================
 
     /**
      * Confirma la orden. Solo válido desde PENDIENTE.
@@ -216,9 +212,7 @@ public class Orden {
         cambiarEstado(EstadoOrden.CANCELADA, motivo);
     }
 
-    // ========================================================================
     // CONSULTAS
-    // ========================================================================
 
     public EstadoOrden obtenerEstadoActual() {
         return estado;
@@ -228,9 +222,7 @@ public class Orden {
         return Collections.unmodifiableList(historialEstados);
     }
 
-    // ========================================================================
     // MÉTODOS PRIVADOS
-    // ========================================================================
 
     private void validarTransicion(EstadoOrden estadoDestino, String reglaId, String mensaje) {
         if (!this.estado.puedeTransicionarA(estadoDestino)) {
@@ -245,9 +237,7 @@ public class Orden {
                 anterior, nuevoEstado, LocalDateTime.now(), motivo, "sistema"));
     }
 
-    // ========================================================================
     // GETTERS (sin setters — encapsulación)
-    // ========================================================================
 
     public OrdenId getId() {
         return id;
@@ -293,20 +283,4 @@ public class Orden {
         return fechaCreacion;
     }
 
-    // --- Igualdad por identidad ---
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        Orden orden = (Orden) o;
-        return Objects.equals(id, orden.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
 }

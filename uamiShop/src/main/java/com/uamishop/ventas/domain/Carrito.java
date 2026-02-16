@@ -46,9 +46,7 @@ public class Carrito {
         this.fechaActualizacion = this.fechaCreacion;
     }
 
-    // ========================================================================
     // FACTORY METHOD
-    // ========================================================================
 
     /**
      * Crea un nuevo Carrito vacío en estado ACTIVO.
@@ -58,9 +56,7 @@ public class Carrito {
         return new Carrito(CarritoId.generar(), clienteId);
     }
 
-    // ========================================================================
     // OPERACIONES CON ITEMS
-    // ========================================================================
 
     /**
      * Agrega un producto al carrito o incrementa la cantidad si ya existe.
@@ -140,9 +136,7 @@ public class Carrito {
         actualizarFecha();
     }
 
-    // ========================================================================
     // CÁLCULOS
-    // ========================================================================
 
     /**
      * Calcula el subtotal (suma de subtotales de cada item, sin descuentos).
@@ -175,9 +169,7 @@ public class Carrito {
         return items.size();
     }
 
-    // ========================================================================
     // DESCUENTOS
-    // ========================================================================
 
     /**
      * Aplica un descuento al carrito.
@@ -210,9 +202,7 @@ public class Carrito {
         actualizarFecha();
     }
 
-    // ========================================================================
     // TRANSICIONES DE ESTADO
-    // ========================================================================
 
     /**
      * Inicia el proceso de checkout.
@@ -285,17 +275,13 @@ public class Carrito {
         actualizarFecha();
     }
 
-    // ========================================================================
     // CONSULTAS
-    // ========================================================================
 
     public EstadoCarrito obtenerEstadoActual() {
         return estado;
     }
 
-    // ========================================================================
     // MÉTODOS PRIVADOS
-    // ========================================================================
 
     private void validarEstadoParaModificacion(String operacion) {
         if (!estado.permiteModificaciones()) {
@@ -320,9 +306,7 @@ public class Carrito {
         this.fechaActualizacion = LocalDateTime.now();
     }
 
-    // ========================================================================
     // GETTERS (sin setters — encapsulación)
-    // ========================================================================
 
     public CarritoId getId() {
         return id;
@@ -348,20 +332,4 @@ public class Carrito {
         return fechaActualizacion;
     }
 
-    // --- Igualdad por identidad ---
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        Carrito carrito = (Carrito) o;
-        return Objects.equals(id, carrito.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
 }
