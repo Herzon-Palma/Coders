@@ -2,7 +2,6 @@ package com.uamishop.ventas.domain;
 
 import com.uamishop.catalogo.domain.Productoid;
 import com.uamishop.shared.domain.ClienteId;
-import com.uamishop.shared.domain.ProductoRef;
 import com.uamishop.shared.domain.Money;
 import com.uamishop.shared.domain.exception.DomainException;
 import com.uamishop.ventas.domain.exception.CarritoException;
