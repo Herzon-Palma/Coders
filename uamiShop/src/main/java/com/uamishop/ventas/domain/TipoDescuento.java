@@ -1,5 +1,5 @@
 package com.uamishop.ventas.domain;
 
-public record CarritoId() {
+public enum TipoDescuento {
 
 }

@@ -1,6 +1,9 @@
-package com.uamishop.catalogo.domain;
+package com.uamishop.catalogo;
 
+import com.uamishop.catalogo.domain.Categoriaid;
 import com.uamishop.shared.domain.Money;
+import com.uamishop.shared.domain.exception.DomainException;
+import com.uamishop.catalogo.domain.Producto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -12,7 +15,7 @@ class ProductoTest {
     @Test
     @DisplayName("RN-CAT-01: No debe permitir nombres menores a 3 caracteres")
     void nombreDemasiadoCorto() {
-        assertThrows(RuntimeException.class, () -> {
+        assertThrows(DomainException.class, () -> {
             Producto.crear("Ab", "Descripción válida", Money.pesos(100), mockCategoriaId);
         });
     }
@@ -23,7 +26,7 @@ class ProductoTest {
         Producto producto = Producto.crear("Laptop Gaming", "Core i9", Money.pesos(1000), mockCategoriaId);
         Money precioMuyCaro = Money.pesos(1501); // 50.1% de incremento
         
-        Exception exception = assertThrows(RuntimeException.class, () -> {
+        Exception exception = assertThrows(DomainException.class, () -> {
             producto.cambiarPrecio(precioMuyCaro);
         });
         assertEquals("El incremento no puede superar el 50%", exception.getMessage());
@@ -34,7 +37,7 @@ class ProductoTest {
     void activarSinImagenes() {
         Producto producto = Producto.crear("Smartphone", "Gama alta", Money.pesos(500), mockCategoriaId);
         
-        assertThrows(RuntimeException.class, producto::activar);
+        assertThrows(DomainException.class, producto::activar);
     }
 
     @Test

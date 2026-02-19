@@ -19,6 +19,14 @@ public class ClienteId implements Serializable {
     }
     
     public UUID getValue() { return id; }
+
+    public static ClienteId of(String id) {
+        return new ClienteId(UUID.fromString(id));
+    }
+    
+    public static ClienteId generar() {
+        return new ClienteId(UUID.randomUUID());
+    }
     
     @Override
     public boolean equals(Object o) {

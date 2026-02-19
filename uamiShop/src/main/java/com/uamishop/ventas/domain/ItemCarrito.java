@@ -1,46 +1,43 @@
 package com.uamishop.ventas.domain;
 
 import com.uamishop.shared.domain.Money;
+import com.uamishop.shared.domain.ProductoRef;
 import com.uamishop.ventas.domain.exception.CarritoException;
 import jakarta.persistence.*;
+
+import java.math.BigDecimal;
 import java.util.UUID;
 
-@Entity
-@Table(name = "items_carrito")
+
 public class ItemCarrito {
     
-    @Id
-    @GeneratedValue
-    private Long id; 
+    private final ItemCarritoId id;
+    private final ProductoRef productoRef;
+    private BigDecimal cantidad;
+    private final Money precioUnitario;
 
-    @Embedded
-    private ProductoRef producto;
-
-    private int cantidad;
-
-    @Embedded
-    @AttributeOverrides({
-        @AttributeOverride(name = "amount", column = @Column(name = "precio_amount")),
-        @AttributeOverride(name = "currency", column = @Column(name = "precio_currency"))
-    })
-    private Money precioUnitario;
-
-    protected ItemCarrito() {}
-
-    public ItemCarrito(ProductoRef producto, int cantidad, Money precio) {
-        this.producto = producto;
-        this.precioUnitario = precio;
-        setCantidad(cantidad);
+    public ItemCarrito(ProductoRef productoRef, int cantidad, Money precioUnitario) {
+        this.id = ItemCarritoId.generar();
+        this.productoRef = productoRef;
+        this.cantidad = BigDecimal.valueOf(cantidad);
+        this.precioUnitario = precioUnitario;
     }
 
-    public void setCantidad(int cantidad) {
-        if (cantidad <= 0) throw new CarritoException("Cantidad debe ser positiva");
-        this.cantidad = cantidad;
+    public void actualizarCantidad(int nuevaCantidad) {
+        this.cantidad = BigDecimal.valueOf(nuevaCantidad);
     }
-    
-    public void aumentarCantidad(int n) { this.cantidad += n; }
 
-    public ProductoRef getProducto() { return producto; }
-    public int getCantidad() { return cantidad; }
+    public void incrementarCantidad(int cantidadAdicional) {
+        this.cantidad = this.cantidad.add(BigDecimal.valueOf(cantidadAdicional));
+    }
+
+    public Money calcularSubtotal() {
+        return this.precioUnitario.multiplicar(this.cantidad);
+    }
+
+    // Getters necesarios
+    public ItemCarritoId getId() { return id; }
+    public ProductoRef getProductoRef() { return productoRef; }
+    public BigDecimal getCantidad() { return cantidad; }
     public Money getPrecioUnitario() { return precioUnitario; }
 }
