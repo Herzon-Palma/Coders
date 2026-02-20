@@ -20,8 +20,20 @@ public record Money(@Column(name = "cantidad") BigDecimal cantidad, @Column(name
         return new Money(BigDecimal.valueOf(cantidad), "MXN");
     }
 
+    public static Money of(double cantidad) {
+        return pesos(cantidad);
+    }
+
     public Money multiplicar(int factor) { // Soluciona error en ItemCarrito
         return new Money(this.cantidad.multiply(BigDecimal.valueOf(factor)), this.moneda);
+    }
+
+    public Money multiply(int factor) {
+        return multiplicar(factor);
+    }
+
+    public Money multiplicar(BigDecimal factor) {
+        return new Money(this.cantidad.multiply(factor), this.moneda);
     }
 
     public Money sumar(Money otro) {

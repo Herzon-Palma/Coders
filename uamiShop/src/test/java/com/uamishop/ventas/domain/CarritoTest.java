@@ -26,8 +26,8 @@ class CarritoTest {
     void setUp() {
         clienteId = ClienteId.generar();
         carrito = Carrito.crear(clienteId);
-        productoBase = new ProductoRef(Productoid.generar(), "Laptop Gaming", "SKU-001", precioBase);
         precioBase = new Money(new BigDecimal("100.00"), "MXN");
+        productoBase = new ProductoRef(Productoid.generar(), "Laptop Gaming", "SKU-001", precioBase);
     }
 
     @Test
@@ -59,11 +59,11 @@ class CarritoTest {
     @DisplayName("RN-VEN-03: Un carrito no debe tener más de 20 productos diferentes")
     void testMaximoProductosDiferentes() {
         for (int i = 0; i < 20; i++) {
-            ProductoRef p = new ProductoRef(Productoid.generar(), "Prod " + i, "SKU-" + i, precioBase);
+            ProductoRef p = new ProductoRef(Productoid.generar(), "Prod " + i, "PRO-0" + (i < 10 ? "0" + i : i), precioBase);
             carrito.agregarProducto(p, 1, precioBase);
         }
         
-        ProductoRef producto21 = new ProductoRef(Productoid.generar(), "Prod 21", "SKU-21", precioBase);
+        ProductoRef producto21 = new ProductoRef(Productoid.generar(), "Prod 21", "PRO-021", precioBase);
         assertThrows(DomainException.class, () -> 
             carrito.agregarProducto(producto21, 1, precioBase)
         );
@@ -73,7 +73,7 @@ class CarritoTest {
     @DisplayName("RN-VEN-10 y 12: Iniciar checkout requiere productos y monto mínimo ($50)")
     void testMontoMinimoCheckout() {
         // Probamos con un producto de $10 (menor a $50)
-        ProductoRef barato = new ProductoRef(Productoid.generar(), "Chicle", "SKU-B", precioBase);
+        ProductoRef barato = new ProductoRef(Productoid.generar(), "Chicle", "CHI-001", precioBase);
         Money precioBarato = new Money(new BigDecimal("10.00"), "MXN");
         
         carrito.agregarProducto(barato, 1, precioBarato);

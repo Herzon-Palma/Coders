@@ -12,7 +12,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class OrdenTest {
+class OrdenarTest {
 
     private Orden orden;
     private final ClienteId clienteId = new ClienteId(UUID.randomUUID());

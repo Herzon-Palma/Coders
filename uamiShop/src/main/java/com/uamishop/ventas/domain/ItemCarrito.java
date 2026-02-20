@@ -1,7 +1,6 @@
 package com.uamishop.ventas.domain;
 
 import com.uamishop.shared.domain.Money;
-import com.uamishop.shared.domain.ProductoRef;
 import com.uamishop.ventas.domain.exception.CarritoException;
 import jakarta.persistence.*;
 

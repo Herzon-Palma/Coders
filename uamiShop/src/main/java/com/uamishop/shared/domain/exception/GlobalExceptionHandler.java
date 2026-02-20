@@ -1,4 +1,4 @@
-package com.uamishop.shared.exception;
+package com.uamishop.shared.domain.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,7 +10,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DomainException.class)
     public ResponseEntity<String> handleDomainException(DomainException e) {
-        //egresa "400 Bad Request" si rompe una regla de negocio
+        //regresa "400 Bad Request" si rompe una regla de negocio
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
     }
     
