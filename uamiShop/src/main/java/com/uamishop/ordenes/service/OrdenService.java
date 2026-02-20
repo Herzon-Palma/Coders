@@ -2,12 +2,15 @@ package com.uamishop.ordenes.service;
 
 import com.uamishop.shared.domain.ClienteId;
 import com.uamishop.shared.domain.Money;
+import com.uamishop.shared.domain.ProductoRef;
+import com.uamishop.shared.domain.DireccionEnvio;
 import com.uamishop.ordenes.domain.*;
-import com.uamishop.ordenes.domain.exception.OrdenException;
+import com.uamishop.ordenes.domain.exception.OrdenDomainException;
 import com.uamishop.ordenes.repository.OrdenJpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -23,25 +26,43 @@ public class OrdenService {
     }
 
     public Orden crearOrden(UUID clienteUuid, DireccionEnvio direccion, List<ItemDto> itemsDto) {
-        //Convertir DTOs a Entidades de Dominio
+        // Convertir DTOs a Entidades de Dominio
         List<ItemOrden> items = itemsDto.stream()
-            .map(d -> new ItemOrden(d.productoId(), d.nombre(), d.cantidad(), Money.of(d.precio())))
+            .map(d -> {
+                // Asumimos SKU temporal si no viene en DTO (debería venir)
+                String sku = "SKU-" + d.productoId().toString().substring(0, 3).toUpperCase(); 
+                ProductoRef ref = new ProductoRef(sku, d.nombre(), Money.of(d.precio()));
+                return new ItemOrden(ref, d.cantidad());
+            })
             .collect(Collectors.toList());
 
-        Orden orden = new Orden(new ClienteId(clienteUuid), direccion, items);
+        // Crear ResumenPago inicial (Pendiente)
+        ResumenPago pagoInicial = ResumenPago.crear("TARJETA"); // Default method
+
+        return repository.save(Orden.crear(new ClienteId(clienteUuid), items, direccion, pagoInicial));
+    }
+
+    public Orden confirmarOrden(UUID ordenId) {
+        Orden orden = buscar(ordenId);
+        orden.confirmar();
         return repository.save(orden);
     }
 
     public Orden pagarOrden(UUID ordenId, String referencia) {
         Orden orden = buscar(ordenId);
-        //Calcular el total
-        orden.pagar(referencia, Money.of(0)); 
+        if (orden.obtenerEstadoActual() == EstadoOrden.PENDIENTE) {
+            orden.confirmar();
+        }
+        orden.procesarPago(referencia);
         return repository.save(orden);
     }
 
-    public Orden enviarOrden(UUID ordenId) {
+    public Orden enviarOrden(UUID ordenId, InfoEnvio infoEnvio) {
         Orden orden = buscar(ordenId);
-        orden.marcarEnviada();
+        if (orden.obtenerEstadoActual() == EstadoOrden.PAGO_PROCESADO) {
+            orden.marcarEnProceso();
+        }
+        orden.marcarEnviada(infoEnvio);
         return repository.save(orden);
     }
 
@@ -59,8 +80,9 @@ public class OrdenService {
 
     public Orden buscar(UUID id) {
         return repository.findById(new OrdenId(id))
-                .orElseThrow(() -> new OrdenException("Orden no encontrada"));
+                .orElseThrow(() -> new OrdenDomainException("Orden no encontrada"));
     }
     
+    // DTO simple
     public record ItemDto(UUID productoId, String nombre, int cantidad, double precio) {}
 }

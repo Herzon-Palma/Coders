@@ -1,5 +1,6 @@
 package com.uamishop.shared.domain;
 
+import jakarta.persistence.Embeddable;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
@@ -11,6 +12,7 @@ import java.util.regex.Pattern;
  * - RN-ORD-03: Código postal debe ser de 5 dígitos.
  * - RN-ORD-04: Teléfono de contacto debe ser de 10 dígitos.
  */
+@Embeddable
 public record DireccionEnvio(
         String nombreDestinatario,
         String calle,

@@ -1,24 +1,30 @@
 package com.uamishop.ordenes.domain;
 
+import com.uamishop.ordenes.domain.exception.ReglaNegocioException;
 import jakarta.persistence.Embeddable;
 import java.io.Serializable;
+import java.util.Objects;
 import java.util.UUID;
 
 @Embeddable
-public class OrdenId implements Serializable {
-    private UUID id;
+public record OrdenId(UUID value) implements Serializable {
 
-    public OrdenId() { this.id = UUID.randomUUID(); }
-    public OrdenId(UUID id) { this.id = id; }
-    
-    public UUID getValue() { return id; }
-
-    @Override
-    public boolean equals(Object o) { 
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        return id.equals(((OrdenId)o).id); 
+    public OrdenId {
+        Objects.requireNonNull(value, "OrdenId.value no puede ser null");
     }
-    @Override
-    public int hashCode() { return id.hashCode(); }
+
+    public static OrdenId newId() {
+        return new OrdenId(UUID.randomUUID());
+    }
+
+    public static OrdenId fromString(String raw) {
+        if (raw == null || raw.isBlank()) {
+            throw new ReglaNegocioException("RN-ORD-ID-01", "OrdenId no puede ser vacío");
+        }
+        try {
+            return new OrdenId(UUID.fromString(raw.trim()));
+        } catch (IllegalArgumentException ex) {
+            throw new ReglaNegocioException("RN-ORD-ID-02", "OrdenId inválido: " + raw);
+        }
+    }
 }
