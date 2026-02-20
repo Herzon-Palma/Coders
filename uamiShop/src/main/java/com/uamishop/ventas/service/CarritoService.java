@@ -1,8 +1,12 @@
 package com.uamishop.ventas.service;
 
+import com.uamishop.catalogo.domain.Productoid;
+import com.uamishop.shared.domain.ClienteId;
 import com.uamishop.shared.domain.Money;
-import com.uamishop.shared.exception.DomainException;
+import com.uamishop.shared.domain.exception.DomainException;
 import com.uamishop.ventas.domain.Carrito;
+import com.uamishop.ventas.domain.CarritoId;
+import com.uamishop.ventas.domain.ProductoRef;
 import com.uamishop.ventas.repository.CarritoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,39 +16,92 @@ import java.util.UUID;
 @Transactional
 public class CarritoService {
 
-    private final CarritoRepository repository;
-
-    public CarritoService(CarritoRepository repository) {
-        this.repository = repository;
+    private final CarritoRepository carritoRepository;
+    
+    public CarritoService(CarritoRepository carritoRepository) {
+        this.carritoRepository = carritoRepository;
     }
 
-    public Carrito obtenerCarritoActivo(UUID clienteId) {
-        return repository.findByClienteIdAndEstado(clienteId, "ACTIVO")
-                .orElseGet(() -> repository.save(new Carrito(clienteId)));
+    @Transactional
+    public Carrito crear(ClienteId clienteId) {
+        // Podríamos validar si ya existe un carrito ACTIVO para este cliente antes de crear otro
+        Carrito nuevoCarrito = Carrito.crear(clienteId);
+        return carritoRepository.save(nuevoCarrito);
     }
 
-    public Carrito agregarProducto(UUID carritoId, UUID prodId, String nombre, int cantidad, double precio) {
-        Carrito carrito = repository.findById(carritoId)
-                .orElseThrow(() -> new DomainException("Carrito no encontrado"));
-        
-        carrito.agregarProducto(prodId, nombre, cantidad, Money.of(precio));
-        
-        return repository.save(carrito);
+    @Transactional(readOnly = true)
+    public Carrito obtenerCarrito(CarritoId carritoId) {
+        return carritoRepository.findById(carritoId)
+                .orElseThrow(() -> new DomainException("Carrito no encontrado con ID: " + carritoId.value()));
     }
 
-    public void eliminarProducto(UUID carritoId, UUID productoId) {
-        Carrito carrito = repository.findById(carritoId)
-                .orElseThrow(() -> new DomainException("Carrito no encontrado"));
+    @Transactional
+    public Carrito agregarProducto(CarritoId carritoId, ProductoRef productoRef, int cantidad, Money precioUnitario) {
+        Carrito carrito = obtenerCarrito(carritoId);
         
+        // La lógica de RN-VEN-01 a 04 ocurre dentro del Agregado
+        carrito.agregarProducto(productoRef, cantidad, precioUnitario);
+        
+        return carritoRepository.save(carrito);
+    }
+
+    @Transactional
+    public Carrito modificarCantidad(CarritoId carritoId, Productoid productoId, int nuevaCantidad) {
+        Carrito carrito = obtenerCarrito(carritoId);
+        
+        // RN-VEN-05 y 06 validados en el dominio
+        carrito.modificarCantidad(productoId, nuevaCantidad);
+        
+        return carritoRepository.save(carrito);
+    }
+
+    @Transactional
+    public Carrito eliminarProducto(CarritoId carritoId, Productoid productoId) {
+        Carrito carrito = obtenerCarrito(carritoId);
+        
+        // RN-VEN-07 y 08 validados en el dominio
         carrito.eliminarProducto(productoId);
-        repository.save(carrito);
+        
+        return carritoRepository.save(carrito);
     }
 
-    public Carrito checkout(UUID carritoId) {
-        Carrito carrito = repository.findById(carritoId)
-                .orElseThrow(() -> new DomainException("Carrito no encontrado"));
+    @Transactional
+    public Carrito vaciar(CarritoId carritoId) {
+        Carrito carrito = obtenerCarrito(carritoId);
         
+        // RN-VEN-09 validado en el dominio
+        carrito.vaciar();
+        
+        return carritoRepository.save(carrito);
+    }
+
+    @Transactional
+    public Carrito iniciarCheckout(CarritoId carritoId) {
+        Carrito carrito = obtenerCarrito(carritoId);
+        
+        // RN-VEN-10, 11 y 12 validados en el dominio
         carrito.iniciarCheckout();
-        return repository.save(carrito);
+        
+        return carritoRepository.save(carrito);
+    }
+
+    @Transactional
+    public Carrito completarCheckout(CarritoId carritoId) {
+        Carrito carrito = obtenerCarrito(carritoId);
+        
+        // RN-VEN-13 validado en el dominio
+        carrito.completarCheckout();
+        
+        return carritoRepository.save(carrito);
+    }
+
+    @Transactional
+    public Carrito abandonar(CarritoId carritoId) {
+        Carrito carrito = obtenerCarrito(carritoId);
+        
+        // RN-VEN-14 validado en el dominio
+        carrito.abandonar();
+        
+        return carritoRepository.save(carrito);
     }
 }

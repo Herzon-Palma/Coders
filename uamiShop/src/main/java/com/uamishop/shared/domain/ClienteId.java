@@ -38,4 +38,7 @@ public class ClienteId implements Serializable {
 
     @Override
     public int hashCode() { return id.hashCode(); }
+
+    //Getter
+    public UUID getId() { return id; }
 }

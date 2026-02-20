@@ -16,12 +16,30 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/* Está clase representa el aggregate root de niestro diagrama 
+   de clases del documento de la practica 2*/
+@Entity
+@Table(name = "carritos")
 public class Carrito {
+
+    @EmbeddedId
     private final CarritoId id;
+
+    @Embedded
+    @AttributeOverride(name = "id", column = @Column(name = "cliente_id", nullable = false)) // el nullable nos sirve para que JPA no intente crear una tabla aparte para ClienteId
     private final ClienteId clienteId;
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true) // el orphanRemoval asegura que si un ItemCarrito se elimina de la lista, también se borre de la base de datos
+    @JoinColumn(name = "carrito_id") // Clave foránea en la tabla de items que referencia al carrito
     private final List<ItemCarrito> items;
+
+    @ElementCollection // Para almacenar los descuentos aplicados como una colección de elementos embebidos
+    @CollectionTable(name = "descuentos_carrito", joinColumns = @JoinColumn(name = "carrito_id")) // Tabla para los descuentos aplicados
     private final List<DescuentoAplicado> descuentos;
+    
+    @Enumerated(EnumType.STRING) // Guardamos el estado como texto en la base de datos para mayor claridad
     private EstadoCarrito estado;
+
     private final LocalDateTime fechaCreacion;
     private LocalDateTime fechaActualizacion;
 
@@ -165,5 +183,6 @@ public class Carrito {
     public CarritoId getId() { return id; }
     public ClienteId getClienteId() { return clienteId; }
     public EstadoCarrito getEstado() { return estado; }
+    public List<ItemCarrito> getItems() { return items; }
     
 }

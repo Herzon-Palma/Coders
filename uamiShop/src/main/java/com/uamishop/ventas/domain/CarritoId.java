@@ -1,5 +1,19 @@
 package com.uamishop.ventas.domain;
 
-public record CarritoId() {
+import java.io.Serializable;
+import java.util.UUID;
 
+import jakarta.persistence.Embeddable;
+
+@Embeddable
+public record CarritoId(UUID value) implements Serializable {
+    public static CarritoId generar() {
+        return new CarritoId(UUID.randomUUID());
+    }
+    
+    public UUID getValue() {
+        return value;
+    }
+
+    
 }
