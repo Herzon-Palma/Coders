@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import com.uamishop.catalogo.controller.dto.ProductoResponse;
-import com.uamishop.shared.exception.ApiError;
+import com.uamishop.ApiError;
 import com.uamishop.catalogo.controller.dto.ProductoRequest;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
