@@ -23,10 +23,9 @@ public class OrdenController {
     @PostMapping
     public ResponseEntity<Orden> crear(@RequestBody CrearOrdenRequest request) {
         return ResponseEntity.ok(service.crearOrden(
-            request.clienteId(), 
-            request.direccion(), 
-            request.items()
-        ));
+                request.clienteId(),
+                request.direccion(),
+                request.items()));
     }
 
     @GetMapping("/{id}")
@@ -60,9 +59,9 @@ public class OrdenController {
     }
 }
 
-//DTOs
+// DTOs
 record CrearOrdenRequest(
-    UUID clienteId, 
-    DireccionEnvio direccion, 
-    List<OrdenService.ItemDto> items
-) {}
+        UUID clienteId,
+        DireccionEnvio direccion,
+        List<OrdenService.ItemDto> items) {
+}

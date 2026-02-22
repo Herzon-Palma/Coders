@@ -1,9 +1,7 @@
 package com.uamishop.ventas.domain;
 
-
-
-import com.uamishop.shared.domain.Money;
 import com.uamishop.shared.domain.Productoid;
+import com.uamishop.shared.domain.Money;
 import com.uamishop.shared.domain.exception.DomainException;
 import com.uamishop.shared.domain.ClienteId;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,17 +31,13 @@ class CarritoTest {
     @Test
     @DisplayName("RN-VEN-01: No debe permitir agregar cantidad cero o negativa")
     void testAgregarCantidadInvalida() {
-        assertThrows(DomainException.class, () -> 
-            carrito.agregarProducto(productoBase, 0, precioBase)
-        );
+        assertThrows(DomainException.class, () -> carrito.agregarProducto(productoBase, 0, precioBase));
     }
 
     @Test
     @DisplayName("RN-VEN-02: No debe permitir más de 10 unidades de un mismo producto")
     void testCantidadMaximaPorProducto() {
-        assertThrows(DomainException.class, () -> 
-            carrito.agregarProducto(productoBase, 11, precioBase)
-        );
+        assertThrows(DomainException.class, () -> carrito.agregarProducto(productoBase, 11, precioBase));
     }
 
     @Test
@@ -59,14 +53,13 @@ class CarritoTest {
     @DisplayName("RN-VEN-03: Un carrito no debe tener más de 20 productos diferentes")
     void testMaximoProductosDiferentes() {
         for (int i = 0; i < 20; i++) {
-            ProductoRef p = new ProductoRef(Productoid.generar(), "Prod " + i, "PRO-0" + (i < 10 ? "0" + i : i), precioBase);
+            ProductoRef p = new ProductoRef(Productoid.generar(), "Prod " + i, "PRO-0" + (i < 10 ? "0" + i : i),
+                    precioBase);
             carrito.agregarProducto(p, 1, precioBase);
         }
-        
+
         ProductoRef producto21 = new ProductoRef(Productoid.generar(), "Prod 21", "PRO-021", precioBase);
-        assertThrows(DomainException.class, () -> 
-            carrito.agregarProducto(producto21, 1, precioBase)
-        );
+        assertThrows(DomainException.class, () -> carrito.agregarProducto(producto21, 1, precioBase));
     }
 
     @Test
@@ -75,9 +68,9 @@ class CarritoTest {
         // Probamos con un producto de $10 (menor a $50)
         ProductoRef barato = new ProductoRef(Productoid.generar(), "Chicle", "CHI-001", precioBase);
         Money precioBarato = new Money(new BigDecimal("10.00"), "MXN");
-        
+
         carrito.agregarProducto(barato, 1, precioBarato);
-        
+
         assertThrows(DomainException.class, () -> carrito.iniciarCheckout());
     }
 
@@ -86,7 +79,7 @@ class CarritoTest {
     void testEstadoCheckout() {
         carrito.agregarProducto(productoBase, 1, precioBase); // $100 > $50
         carrito.iniciarCheckout();
-        
+
         assertEquals(EstadoCarrito.CHECKOUT, carrito.getEstado());
     }
 
@@ -95,25 +88,22 @@ class CarritoTest {
     void testModificarEnCheckout() {
         carrito.agregarProducto(productoBase, 1, precioBase);
         carrito.iniciarCheckout();
-        
-        assertThrows(DomainException.class, () -> 
-            carrito.modificarCantidad(productoBase.productoid(), 5)
-        );
+
+        assertThrows(DomainException.class, () -> carrito.modificarCantidad(productoBase.productoid(), 5));
     }
 
     @Test
     @DisplayName("RN-VEN-16: El descuento no puede ser mayor al 30% del subtotal")
     void testDescuentoMaximo() {
         carrito.agregarProducto(productoBase, 1, precioBase); // Subtotal $100
-        
+
         // Intentamos aplicar un descuento de $40 (40% de $100)
         DescuentoAplicado descuentoExcesivo = new DescuentoAplicado(
-            "CUPON40", 
-            TipoDescuento.MONTO_FIJO, 
-            new BigDecimal("40.00"), 
-            new Money(new BigDecimal("40.00"), "MXN")
-        );
-        
+                "CUPON40",
+                TipoDescuento.MONTO_FIJO,
+                new BigDecimal("40.00"),
+                new Money(new BigDecimal("40.00"), "MXN"));
+
         assertThrows(DomainException.class, () -> carrito.aplicarDescuento(descuentoExcesivo));
     }
 }
