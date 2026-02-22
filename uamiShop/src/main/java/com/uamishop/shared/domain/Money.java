@@ -47,4 +47,14 @@ public record Money(@Column(name = "cantidad") BigDecimal cantidad, @Column(name
     public Money dividir(int divisor) {
         return new Money(this.cantidad.divide(BigDecimal.valueOf(divisor), java.math.RoundingMode.HALF_UP), this.moneda);
     }
+
+    public static Money parse(String trim) {
+        String[] partes = trim.split(" ");
+        if (partes.length != 2) {
+            throw new IllegalArgumentException("Formato inválido para Money. Se esperaba 'cantidad moneda'");
+        }
+        BigDecimal cantidad = new BigDecimal(partes[0]);
+        String moneda = partes[1];
+        return new Money(cantidad, moneda);
+    }
 }

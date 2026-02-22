@@ -35,7 +35,15 @@ public class ResumenPago {
     }
 
     public static ResumenPago crear(String string) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'crear'");
+        String[] partes = string.split(";");
+        if (partes.length != 3) {
+            throw new IllegalArgumentException("Formato inválido para ResumenPago. Se esperaba: referencia;fecha;monto");
+        }
+        String referencia = partes[0].trim();
+        LocalDateTime fecha = LocalDateTime.parse(partes[1].trim());
+        Money monto = Money.parse(partes[2].trim());
+        ResumenPago resumen = new ResumenPago(referencia, monto);
+        resumen.fechaPago = fecha; // Sobrescribe la fecha actual con la proporcionada
+        return resumen;
     }
 }
