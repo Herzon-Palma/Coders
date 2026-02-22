@@ -5,12 +5,11 @@ import com.uamishop.shared.domain.Money;
 import com.uamishop.shared.domain.Productoid;
 import com.uamishop.ventas.domain.Carrito;
 import com.uamishop.ventas.domain.CarritoId;
-import com.uamishop.ventas.domain.ProductoRef;
+import com.uamishop.shared.domain.ProductoRef;
 import com.uamishop.ventas.service.CarritoService;
 import com.uamishop.ventas.controller.dto.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 
 import java.util.stream.Collectors;
 
@@ -38,17 +37,18 @@ public class CarritoController {
 
     @PostMapping("/{id}/items")
     public ResponseEntity<CarritoResponse> agregarProducto(
-            @PathVariable CarritoId id, 
+            @PathVariable CarritoId id,
             @RequestBody CarritoRequest request) {
-        
-        // En una implementación real, buscarías el producto en el catálogo para llenar el ProductoRef
-        ProductoRef ref = new ProductoRef(new Productoid(request.productoId()), "Producto", "SKU-TEMP", null);
+
+        // En una implementación real, buscarías el producto en el catálogo para llenar
+        // el ProductoRef
+        ProductoRef ref = new ProductoRef(new Productoid(request.productoId()), "Producto", "SKU-TMP");
         // El precio vendría del servicio de catálogo
-        Money precio = new Money(new java.math.BigDecimal("100.00"), "MXN"); 
+        Money precio = new Money(new java.math.BigDecimal("100.00"), "MXN");
 
         Carrito carrito = carritoService.agregarProducto(
                 id, ref, request.cantidad(), precio);
-        
+
         return ResponseEntity.ok(mapToResponse(carrito));
     }
 
@@ -57,7 +57,7 @@ public class CarritoController {
             @PathVariable CarritoId id,
             @PathVariable Productoid productoId,
             @RequestBody Integer nuevaCantidad) {
-        
+
         Carrito carrito = carritoService.modificarCantidad(
                 id, productoId, nuevaCantidad);
         return ResponseEntity.ok(mapToResponse(carrito));
@@ -67,7 +67,7 @@ public class CarritoController {
     public ResponseEntity<CarritoResponse> eliminarProducto(
             @PathVariable CarritoId id,
             @PathVariable Productoid productoId) {
-        
+
         Carrito carrito = carritoService.eliminarProducto(
                 id, productoId);
         return ResponseEntity.ok(mapToResponse(carrito));
@@ -85,7 +85,8 @@ public class CarritoController {
         return ResponseEntity.ok(mapToResponse(carrito));
     }
 
-    // Utilizamos un método privado para mapear el Carrito a una respuesta DTO, evitando exponer la entidad directamente
+    // Utilizamos un método privado para mapear el Carrito a una respuesta DTO,
+    // evitando exponer la entidad directamente
     private CarritoResponse mapToResponse(Carrito c) {
         var itemsResponse = c.getItems().stream()
                 .map(item -> new ItemResponse(
@@ -93,8 +94,8 @@ public class CarritoController {
                         item.getProductoRef().nombreProducto(),
                         item.getCantidad(),
                         item.getPrecioUnitario().cantidad(),
-                        item.calcularSubtotal().cantidad()
-                )).collect(Collectors.toList());
+                        item.calcularSubtotal().cantidad()))
+                .collect(Collectors.toList());
 
         return new CarritoResponse(
                 c.getId().getValue(),
@@ -102,7 +103,6 @@ public class CarritoController {
                 c.getEstado().name(),
                 itemsResponse,
                 c.calcularTotal().cantidad(),
-                c.calcularTotal().moneda()
-        );
+                c.calcularTotal().moneda());
     }
 }
