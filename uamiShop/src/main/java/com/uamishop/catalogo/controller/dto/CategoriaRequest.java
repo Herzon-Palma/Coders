@@ -1,5 +1,7 @@
 package com.uamishop.catalogo.controller.dto;
 
-public record CategoriaRequest(String nombre, String descripcion) {
+import jakarta.validation.constraints.*;
+
+public record CategoriaRequest(@NotEmpty String nombre, @NotEmpty String descripcion) {
 
 }
