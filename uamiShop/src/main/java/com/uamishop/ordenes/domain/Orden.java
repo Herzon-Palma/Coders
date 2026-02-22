@@ -1,6 +1,5 @@
 package com.uamishop.ordenes.domain;
 
-import com.uamishop.ordenes.domain.exception.OrdenDomainException;
 import com.uamishop.ordenes.domain.exception.ReglaNegocioException;
 import com.uamishop.shared.domain.ClienteId;
 import com.uamishop.shared.domain.DireccionEnvio;
@@ -370,14 +369,11 @@ public class Orden {
 
     public void pagar(String referencia, Money pesos) {
         if (this.estado != EstadoOrden.PENDIENTE) {
-            throw new OrdenDomainException("Solo se puede pagar una orden en estado PENDIENTE");
+            throw new ReglaNegocioException("RN-ORD-07",
+                    "Solo se puede pagar una orden en estado PENDIENTE (estado actual: " + this.estado + ")");
         }
         this.resumenPago = this.resumenPago.conPagoAprobado(referencia);
         cambiarEstado(EstadoOrden.PAGO_PROCESADO, "Pago procesado: " + referencia);
     }
 
-    public Object getEstado() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getEstado'");
-    }
 }

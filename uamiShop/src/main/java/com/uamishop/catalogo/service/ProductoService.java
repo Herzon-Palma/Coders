@@ -6,7 +6,7 @@ import com.uamishop.catalogo.repository.CategoriaRepository;
 import com.uamishop.catalogo.controller.dto.*;
 import com.uamishop.shared.domain.Money;
 import com.uamishop.shared.domain.Productoid;
-import com.uamishop.shared.domain.exception.DomainException;
+
 import com.uamishop.shared.domain.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -73,7 +73,7 @@ public class ProductoService {
         Productoid productoid = new Productoid(id);
 
         Producto producto = productoRepository.findById(productoid)
-                .orElseThrow(() -> new DomainException("Producto no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado"));
 
         producto.activar();
         productoRepository.save(producto);
@@ -83,7 +83,7 @@ public class ProductoService {
     public void desactivar(UUID id) {
         Productoid productoid = new Productoid(id);
         Producto producto = productoRepository.findById(productoid)
-                .orElseThrow(() -> new DomainException("Producto no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado"));
 
         producto.desactivar();
         productoRepository.save(producto);
