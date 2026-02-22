@@ -7,10 +7,10 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Embeddable
-public record OrdenId(UUID value) implements Serializable {
+public record OrdenId(UUID id) implements Serializable {
 
     public OrdenId {
-        Objects.requireNonNull(value, "OrdenId.value no puede ser null");
+        Objects.requireNonNull(id, "OrdenId.id no puede ser null");
     }
 
     public static OrdenId newId() {

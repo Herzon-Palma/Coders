@@ -9,10 +9,10 @@ import java.util.UUID;
  * Value Object: identificador único de un item dentro de una orden.
  */
 @Embeddable
-public record ItemOrdenId(UUID value) implements Serializable {
+public record ItemOrdenId(UUID id) implements Serializable {
 
     public ItemOrdenId {
-        Objects.requireNonNull(value, "ItemOrdenId.value no puede ser null");
+        Objects.requireNonNull(id, "ItemOrdenId.id no puede ser null");
     }
 
     public static ItemOrdenId newId() {

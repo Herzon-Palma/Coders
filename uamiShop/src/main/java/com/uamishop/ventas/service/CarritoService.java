@@ -32,7 +32,7 @@ public class CarritoService {
     @Transactional(readOnly = true)
     public Carrito obtenerCarrito(CarritoId carritoId) {
         return carritoRepository.findById(carritoId)
-                .orElseThrow(() -> new DomainException("Carrito no encontrado con ID: " + carritoId.value()));
+                .orElseThrow(() -> new DomainException("Carrito no encontrado con ID: " + carritoId.id()));
     }
 
     @Transactional
