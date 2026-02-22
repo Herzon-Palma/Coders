@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.uamishop.catalogo.controller.dto.CategoriaRequest;
 import com.uamishop.catalogo.controller.dto.CategoriaResponse;
 import com.uamishop.catalogo.service.CategoriaService;
-import com.uamishop.shared.exception.ApiError;
+import com.uamishop.ApiError;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
