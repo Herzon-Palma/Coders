@@ -4,6 +4,7 @@ import com.uamishop.ordenes.domain.exception.ReglaNegocioException;
 import com.uamishop.shared.domain.ClienteId;
 import com.uamishop.shared.domain.DireccionEnvio;
 import com.uamishop.shared.domain.Money;
+import com.uamishop.shared.domain.Productoid;
 import com.uamishop.shared.domain.ProductoRef;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -27,12 +28,11 @@ class OrdenarTest {
     @BeforeEach
     void setup() {
         direccion = new DireccionEnvio(
-            "Juan Perez", "Av. Siempre Viva 123", "Springfield", "EdoMex", 
-            "12345", "México", "5512345678", "Casa blanca"
-        );
-        
-        ProductoRef prodRef = new ProductoRef("SKU-123", "Laptop", Money.pesos(15000));
-        item = new ItemOrden(UUID.randomUUID(), "Laptop", BigDecimal.ONE, Money.pesos(15000));
+                "Juan Perez", "Av. Siempre Viva 123", "Springfield", "EdoMex",
+                "12345", "México", "5512345678", "Casa blanca");
+
+        ProductoRef prodRef = new ProductoRef(Productoid.generar(), "Laptop", "SKU-123");
+        item = new ItemOrden(prodRef, BigDecimal.ONE, Money.pesos(15000));
         pagoInicial = ResumenPago.crear("TARJETA");
 
         // Se ejecuta antes de cada test: Crea una orden nueva (PENDIENTE)
@@ -76,7 +76,7 @@ class OrdenarTest {
     void errorEnviarSinPreparar() {
         // Estado PENDIENTE
         InfoEnvio info = new InfoEnvio("DHL", "GUIA-1234567890", LocalDateTime.now().plusDays(2));
-        
+
         assertThrows(ReglaNegocioException.class, () -> {
             orden.marcarEnviada(info);
         });
@@ -87,7 +87,7 @@ class OrdenarTest {
     void errorCancelarEnviada() {
         orden.confirmar();
         orden.procesarPago("REF-123");
-        orden.marcarEnProceso(); 
+        orden.marcarEnProceso();
         orden.marcarEnviada(new InfoEnvio("DHL", "GUIA-1234567890", LocalDateTime.now().plusDays(2)));
 
         assertThrows(ReglaNegocioException.class, () -> {
