@@ -3,9 +3,7 @@ package com.uamishop.shared.exception;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 
-/**
- * Estructura estándar para respuestas de error (Práctica 4).
- */
+//Estructura para respuestas de error
 @Schema(description = "Estructura estándar para respuestas de error")
 public record ApiError(
         @Schema(description = "Código de estado HTTP", example = "400") int status,
@@ -21,3 +19,4 @@ public record ApiError(
         this(status, error, message, path, LocalDateTime.now());
     }
 }
+
