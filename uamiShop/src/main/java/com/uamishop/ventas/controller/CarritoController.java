@@ -3,7 +3,7 @@ package com.uamishop.ventas.controller;
 import com.uamishop.shared.domain.ClienteId;
 import com.uamishop.shared.domain.Money;
 import com.uamishop.shared.domain.Productoid;
-import com.uamishop.shared.exception.ApiError;
+import com.uamishop.ApiError;
 import com.uamishop.ventas.domain.Carrito;
 import com.uamishop.ventas.domain.CarritoId;
 import com.uamishop.shared.domain.ProductoRef;
