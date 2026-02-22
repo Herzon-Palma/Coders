@@ -2,6 +2,7 @@ package com.uamishop.ordenes.service;
 
 import com.uamishop.shared.domain.ClienteId;
 import com.uamishop.shared.domain.Money;
+import com.uamishop.shared.domain.Productoid;
 import com.uamishop.shared.domain.ProductoRef;
 import com.uamishop.shared.domain.DireccionEnvio;
 import com.uamishop.ordenes.domain.*;
@@ -29,12 +30,12 @@ public class OrdenService {
     public Orden crearOrden(UUID clienteUuid, DireccionEnvio direccion, List<ItemDto> itemsDto) {
         // Convertir DTOs a Entidades de Dominio
         List<ItemOrden> items = itemsDto.stream().map(d -> {
-                // Asumimos SKU temporal si no viene en DTO (debería venir)
-                String sku = "SKU-" + d.productoId().toString().substring(0, 3).toUpperCase(); 
-                ProductoRef ref = new ProductoRef(sku, d.nombre(), Money.pesos(d.precio()));
-                return new ItemOrden(d.productoId(), d.nombre(), BigDecimal.valueOf(d.cantidad()), Money.pesos(d.precio()));
-            })
-            .collect(Collectors.toList());
+            // Generamos un SKU temporal si no viene en DTO (debería venir)
+            String sku = "SKU-" + d.productoId().toString().substring(0, 3).toUpperCase();
+            ProductoRef ref = new ProductoRef(new Productoid(d.productoId()), d.nombre(), sku);
+            return new ItemOrden(ref, BigDecimal.valueOf(d.cantidad()), Money.pesos(d.precio()));
+        })
+                .collect(Collectors.toList());
 
         // Crear ResumenPago inicial (Pendiente)
         ResumenPago pagoInicial = ResumenPago.crear("TARJETA"); // Default method
@@ -50,8 +51,8 @@ public class OrdenService {
 
     public Orden pagarOrden(UUID ordenId, String referencia) {
         Orden orden = buscar(ordenId);
-        //Calcular el total
-        orden.pagar(referencia, Money.pesos(0)); 
+        // Calcular el total
+        orden.pagar(referencia, Money.pesos(0));
         if (orden.obtenerEstadoActual() == EstadoOrden.PENDIENTE) {
             orden.confirmar();
         }
@@ -84,7 +85,8 @@ public class OrdenService {
         return repository.findById(new OrdenId(id))
                 .orElseThrow(() -> new OrdenDomainException("Orden no encontrada"));
     }
-    
+
     // DTO simple
-    public record ItemDto(UUID productoId, String nombre, int cantidad, double precio) {}
+    public record ItemDto(UUID productoId, String nombre, int cantidad, double precio) {
+    }
 }
