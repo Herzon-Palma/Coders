@@ -53,22 +53,22 @@ public class Orden {
 
     @Embedded
     @AttributeOverrides({
-        @AttributeOverride(name = "cantidad", column = @Column(name = "subtotal_cantidad")),
-        @AttributeOverride(name = "moneda", column = @Column(name = "subtotal_moneda"))
+            @AttributeOverride(name = "cantidad", column = @Column(name = "subtotal_cantidad")),
+            @AttributeOverride(name = "moneda", column = @Column(name = "subtotal_moneda"))
     })
     private final Money subtotal;
 
     @Embedded
     @AttributeOverrides({
-        @AttributeOverride(name = "cantidad", column = @Column(name = "descuento_cantidad")),
-        @AttributeOverride(name = "moneda", column = @Column(name = "descuento_moneda"))
+            @AttributeOverride(name = "cantidad", column = @Column(name = "descuento_cantidad")),
+            @AttributeOverride(name = "moneda", column = @Column(name = "descuento_moneda"))
     })
     private final Money descuento;
 
     @Embedded
     @AttributeOverrides({
-        @AttributeOverride(name = "cantidad", column = @Column(name = "total_cantidad")),
-        @AttributeOverride(name = "moneda", column = @Column(name = "total_moneda"))
+            @AttributeOverride(name = "cantidad", column = @Column(name = "total_cantidad")),
+            @AttributeOverride(name = "moneda", column = @Column(name = "total_moneda"))
     })
     private final Money total;
 
