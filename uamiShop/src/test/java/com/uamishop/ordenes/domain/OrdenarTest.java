@@ -1,12 +1,16 @@
 package com.uamishop.ordenes.domain;
 
-import com.uamishop.ordenes.domain.exception.OrdenException;
+import com.uamishop.ordenes.domain.exception.ReglaNegocioException;
 import com.uamishop.shared.domain.ClienteId;
+import com.uamishop.shared.domain.DireccionEnvio;
 import com.uamishop.shared.domain.Money;
+import com.uamishop.shared.domain.ProductoRef;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -16,62 +20,85 @@ class OrdenarTest {
 
     private Orden orden;
     private final ClienteId clienteId = new ClienteId(UUID.randomUUID());
-    private final DireccionEnvio direccion = new DireccionEnvio("Calle 1", "CDMX", "09000", "Mexico");
-    private final ItemOrden item = new ItemOrden(UUID.randomUUID(), "Laptop", 1, Money.of(15000));
+    private DireccionEnvio direccion;
+    private ItemOrden item;
+    private ResumenPago pagoInicial;
 
     @BeforeEach
     void setup() {
-        //Se ejecuta antes de cada test: Crea una orden nueva
-        orden = new Orden(clienteId, direccion, List.of(item));
+        direccion = new DireccionEnvio(
+            "Juan Perez", "Av. Siempre Viva 123", "Springfield", "EdoMex", 
+            "12345", "México", "5512345678", "Casa blanca"
+        );
+        
+        ProductoRef prodRef = new ProductoRef("SKU-123", "Laptop", Money.pesos(15000));
+        item = new ItemOrden(UUID.randomUUID(), "Laptop", BigDecimal.ONE, Money.pesos(15000));
+        pagoInicial = ResumenPago.crear("TARJETA");
+
+        // Se ejecuta antes de cada test: Crea una orden nueva (PENDIENTE)
+        orden = Orden.crear(clienteId, List.of(item), direccion, pagoInicial);
     }
 
     @Test
-    @DisplayName("Debe crear una orden en estado CREADA")
+    @DisplayName("Debe crear una orden en estado PENDIENTE")
     void crearOrden() {
-        assertEquals(EstadoOrden.CREADA, orden.getEstado());
+        assertEquals(EstadoOrden.PENDIENTE, orden.obtenerEstadoActual());
         assertNotNull(orden.getId());
     }
 
     @Test
-    @DisplayName("Flujo exitoso: Pagar -> Enviar -> Entregar")
+    @DisplayName("Flujo exitoso: Confirmar -> Pagar -> Preparar -> Enviar -> Entregar")
     void flujoCompleto() {
-        //1. Pagar
-        orden.pagar("REF-123", Money.of(15000));
-        assertEquals(EstadoOrden.PAGADA, orden.getEstado());
+        // 1. Confirmar
+        orden.confirmar();
+        assertEquals(EstadoOrden.CONFIRMADA, orden.obtenerEstadoActual());
 
-        //2. Enviar
-        orden.marcarEnviada();
-        assertEquals(EstadoOrden.EN_TRANSITO, orden.getEstado());
+        // 2. Pagar
+        orden.procesarPago("REF-PAGO-123");
+        assertEquals(EstadoOrden.PAGO_PROCESADO, orden.obtenerEstadoActual());
 
-        //3. Entregar
+        // 3. Preparar
+        orden.marcarEnProceso();
+        assertEquals(EstadoOrden.EN_PREPARACION, orden.obtenerEstadoActual());
+
+        // 4. Enviar
+        InfoEnvio info = new InfoEnvio("DHL", "GUIA-1234567890", LocalDateTime.now().plusDays(2));
+        orden.marcarEnviada(info);
+        assertEquals(EstadoOrden.ENVIADA, orden.obtenerEstadoActual());
+
+        // 5. Entregar
         orden.marcarEntregada();
-        assertEquals(EstadoOrden.ENTREGADA, orden.getEstado());
+        assertEquals(EstadoOrden.ENTREGADA, orden.obtenerEstadoActual());
     }
 
     @Test
-    @DisplayName("Error: No se puede enviar una orden si no está pagada")
-    void errorEnviarSinPagar() {
-        //La orden nace CREADA
-        assertThrows(OrdenException.class, () -> {
-            orden.marcarEnviada();
+    @DisplayName("Error: No se puede enviar una orden si no está en preparación")
+    void errorEnviarSinPreparar() {
+        // Estado PENDIENTE
+        InfoEnvio info = new InfoEnvio("DHL", "GUIA-1234567890", LocalDateTime.now().plusDays(2));
+        
+        assertThrows(ReglaNegocioException.class, () -> {
+            orden.marcarEnviada(info);
         });
     }
 
     @Test
-    @DisplayName("Error: No se puede cancelar una orden que ya va en camino")
-    void errorCancelarEnTransito() {
-        orden.pagar("REF-123", Money.of(15000));
-        orden.marcarEnviada(); //Estado: EN_TRANSITO
+    @DisplayName("Error: No se puede cancelar una orden que ya fue enviada")
+    void errorCancelarEnviada() {
+        orden.confirmar();
+        orden.procesarPago("REF-123");
+        orden.marcarEnProceso(); 
+        orden.marcarEnviada(new InfoEnvio("DHL", "GUIA-1234567890", LocalDateTime.now().plusDays(2)));
 
-        assertThrows(OrdenException.class, () -> {
+        assertThrows(ReglaNegocioException.class, () -> {
             orden.cancelar("Ya no la quiero");
         });
     }
 
     @Test
-    @DisplayName("Debe cancelar correctamente si está en estado CREADA")
+    @DisplayName("Debe cancelar correctamente si está en estado PENDIENTE")
     void cancelarOrden() {
         orden.cancelar("Me arrepentí");
-        assertEquals(EstadoOrden.CANCELADA, orden.getEstado());
+        assertEquals(EstadoOrden.CANCELADA, orden.obtenerEstadoActual());
     }
 }

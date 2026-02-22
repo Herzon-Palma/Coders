@@ -1,21 +1,34 @@
 package com.uamishop.ordenes.domain;
 
 import jakarta.persistence.Embeddable;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
+/**
+ * Value Object: registro inmutable de un cambio de estado en la orden.
+ * Cada transición se registra con estado anterior, nuevo, fecha, motivo y
+ * usuario.
+ */
 @Embeddable
-public class CambioEstado {
-    private LocalDateTime fecha;
-    private String estadoAnterior;
-    private String nuevoEstado;
-    private String motivo;
+public record CambioEstado(
+        @Enumerated(EnumType.STRING) EstadoOrden estadoAnterior,
+        @Enumerated(EnumType.STRING) EstadoOrden estadoNuevo,
+        LocalDateTime fecha,
+        String motivo,
+        String usuario) {
 
-    protected CambioEstado() {}
+    public CambioEstado {
+        Objects.requireNonNull(estadoAnterior, "Estado anterior requerido");
+        Objects.requireNonNull(estadoNuevo, "Estado nuevo requerido");
+        Objects.requireNonNull(fecha, "Fecha requerida");
+        Objects.requireNonNull(motivo, "Motivo requerido");
+        Objects.requireNonNull(usuario, "Usuario requerido");
+    }
 
-    public CambioEstado(EstadoOrden anterior, EstadoOrden nuevo, String motivo) {
-        this.fecha = LocalDateTime.now();
-        this.estadoAnterior = anterior != null ? anterior.name() : "N/A";
-        this.nuevoEstado = nuevo.name();
-        this.motivo = motivo;
+    public String describir() {
+        return String.format("%s → %s (%s) por %s el %s",
+                estadoAnterior, estadoNuevo, motivo, usuario, fecha);
     }
 }
