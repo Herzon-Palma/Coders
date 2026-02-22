@@ -34,7 +34,7 @@ public record InfoEnvio(
     }
 
     public InfoEnvio(String proveedorLogistico2, String numeroGuia2, String string) {
-        //TODO Auto-generated constructor stub
+        this(proveedorLogistico2, numeroGuia2, LocalDateTime.parse(string));
     }
 
     /**
