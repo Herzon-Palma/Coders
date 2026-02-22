@@ -73,6 +73,7 @@ public class Orden {
     private final Money total;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "orden_estado") // <-- Evita que se llame solo "estado"
     private EstadoOrden estado;
 
     private final LocalDateTime fechaCreacion;

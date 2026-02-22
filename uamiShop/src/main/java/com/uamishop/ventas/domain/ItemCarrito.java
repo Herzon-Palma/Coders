@@ -1,30 +1,41 @@
 package com.uamishop.ventas.domain;
 
 import com.uamishop.shared.domain.Money;
-import com.uamishop.ventas.domain.exception.CarritoException;
 import jakarta.persistence.*;
-
 import java.math.BigDecimal;
-import java.util.UUID;
 
 @Entity
 @Table(name = "items_carrito")
 public class ItemCarrito {
     
     @EmbeddedId
-    private final ItemCarritoId id;
-
-    @Embedded
-    private final ProductoRef productoRef;
-
-    private BigDecimal cantidad;
+    // Renombramos el campo 'valor' del ID del Item
+    @AttributeOverride(name = "valor", column = @Column(name = "item_carrito_id"))
+    private ItemCarritoId id;
 
     @Embedded
     @AttributeOverrides({
-        @AttributeOverride(name = "amount", column = @Column(name = "precio_unitario_amount")),
-        @AttributeOverride(name = "currency", column = @Column(name = "precio_unitario_currency"))
-    }) // Utilizamos AttributeOverrides para mapear los campos de Money a columnas específicas en la tabla de items
-    private final Money precioUnitario;
+        // IMPORTANTE: Aquí renombramos el 'valor' que viene dentro de ProductoRef -> Productoid
+        // Usamos la notación de punto para llegar al campo interno
+        @AttributeOverride(name = "productoid.valor", column = @Column(name = "producto_id")),
+        @AttributeOverride(name = "nombreProducto", column = @Column(name = "producto_nombre")),
+        @AttributeOverride(name = "sku", column = @Column(name = "producto_sku"))
+    })
+    private ProductoRef productoRef;
+
+    @Column(name = "cantidad_items") 
+    private BigDecimal cantidad;
+
+    // 2. El dinero
+    @Embedded
+    @AttributeOverrides({
+        @AttributeOverride(name = "cantidad", column = @Column(name = "precio_monto")), // 'cantidad' es el campo de Money
+        @AttributeOverride(name = "moneda", column = @Column(name = "precio_moneda"))
+    })
+    private Money precioUnitario;
+
+    // Constructor para JPA
+    protected ItemCarrito() {}
 
     public ItemCarrito(ProductoRef productoRef, int cantidad, Money precioUnitario) {
         this.id = ItemCarritoId.generar();
@@ -45,7 +56,7 @@ public class ItemCarrito {
         return this.precioUnitario.multiplicar(this.cantidad);
     }
 
-    // Getters necesarios
+    // Getters
     public ItemCarritoId getId() { return id; }
     public ProductoRef getProductoRef() { return productoRef; }
     public BigDecimal getCantidad() { return cantidad; }

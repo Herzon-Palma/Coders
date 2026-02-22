@@ -24,9 +24,16 @@ public class ItemOrden {
     private final ItemOrdenId id;
 
     private String nombreProducto;
-    private BigDecimal cantidad;
     
+    @Column(name = "cantidad_unidades") // Renombramos las unidades para estar seguros
+    private BigDecimal cantidad;
+
     @Embedded
+    @AttributeOverrides({
+        // El 'name' es "cantidad" porque así se llama en tu record Money
+        @AttributeOverride(name = "cantidad", column = @Column(name = "precio_unitario_monto")),
+        @AttributeOverride(name = "moneda", column = @Column(name = "precio_unitario_divisa"))
+    })
     private Money precioUnitario;
 
     @Embedded
