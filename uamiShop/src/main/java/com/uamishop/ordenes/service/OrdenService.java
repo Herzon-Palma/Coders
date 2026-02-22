@@ -3,11 +3,12 @@ package com.uamishop.ordenes.service;
 import com.uamishop.shared.domain.ClienteId;
 import com.uamishop.shared.domain.Money;
 import com.uamishop.ordenes.domain.*;
-import com.uamishop.ordenes.domain.exception.OrdenException;
+import com.uamishop.ordenes.domain.OrdenException;
 import com.uamishop.ordenes.repository.OrdenJpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -25,7 +26,7 @@ public class OrdenService {
     public Orden crearOrden(UUID clienteUuid, DireccionEnvio direccion, List<ItemDto> itemsDto) {
         //Convertir DTOs a Entidades de Dominio
         List<ItemOrden> items = itemsDto.stream()
-            .map(d -> new ItemOrden(d.productoId(), d.nombre(), d.cantidad(), Money.of(d.precio())))
+            .map(d -> new ItemOrden(d.productoId(), d.nombre(), BigDecimal.valueOf(d.cantidad()) , Money.pesos(d.precio())))
             .collect(Collectors.toList());
 
         Orden orden = new Orden(new ClienteId(clienteUuid), direccion, items);
@@ -35,7 +36,7 @@ public class OrdenService {
     public Orden pagarOrden(UUID ordenId, String referencia) {
         Orden orden = buscar(ordenId);
         //Calcular el total
-        orden.pagar(referencia, Money.of(0)); 
+        orden.pagar(referencia, Money.pesos(0)); 
         return repository.save(orden);
     }
 

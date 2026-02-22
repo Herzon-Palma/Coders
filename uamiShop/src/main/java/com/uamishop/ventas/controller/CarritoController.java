@@ -1,8 +1,8 @@
 package com.uamishop.ventas.controller;
 
-import com.uamishop.catalogo.domain.Productoid;
 import com.uamishop.shared.domain.ClienteId;
 import com.uamishop.shared.domain.Money;
+import com.uamishop.shared.domain.Productoid;
 import com.uamishop.ventas.domain.Carrito;
 import com.uamishop.ventas.domain.CarritoId;
 import com.uamishop.ventas.domain.ProductoRef;
@@ -11,7 +11,7 @@ import com.uamishop.ventas.controller.dto.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
+
 import java.util.stream.Collectors;
 
 @RestController
@@ -25,20 +25,20 @@ public class CarritoController {
     }
 
     @PostMapping
-    public ResponseEntity<CarritoResponse> crear(@RequestBody UUID clienteId) {
-        Carrito carrito = carritoService.crear(new ClienteId(clienteId));
+    public ResponseEntity<CarritoResponse> crear(@RequestBody ClienteId clienteId) {
+        Carrito carrito = carritoService.crear(clienteId);
         return ResponseEntity.ok(mapToResponse(carrito));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CarritoResponse> obtener(@PathVariable UUID id) {
-        Carrito carrito = carritoService.obtenerCarrito(new CarritoId(id));
+    public ResponseEntity<CarritoResponse> obtener(@PathVariable CarritoId id) {
+        Carrito carrito = carritoService.obtenerCarrito(id);
         return ResponseEntity.ok(mapToResponse(carrito));
     }
 
     @PostMapping("/{id}/items")
     public ResponseEntity<CarritoResponse> agregarProducto(
-            @PathVariable UUID id, 
+            @PathVariable CarritoId id, 
             @RequestBody CarritoRequest request) {
         
         // En una implementación real, buscarías el producto en el catálogo para llenar el ProductoRef
@@ -47,41 +47,41 @@ public class CarritoController {
         Money precio = new Money(new java.math.BigDecimal("100.00"), "MXN"); 
 
         Carrito carrito = carritoService.agregarProducto(
-                new CarritoId(id), ref, request.cantidad(), precio);
+                id, ref, request.cantidad(), precio);
         
         return ResponseEntity.ok(mapToResponse(carrito));
     }
 
     @PutMapping("/{id}/items/{productoId}")
     public ResponseEntity<CarritoResponse> modificarCantidad(
-            @PathVariable UUID id,
-            @PathVariable UUID productoId,
+            @PathVariable CarritoId id,
+            @PathVariable Productoid productoId,
             @RequestBody Integer nuevaCantidad) {
         
         Carrito carrito = carritoService.modificarCantidad(
-                new CarritoId(id), new Productoid(productoId), nuevaCantidad);
+                id, productoId, nuevaCantidad);
         return ResponseEntity.ok(mapToResponse(carrito));
     }
 
     @DeleteMapping("/{id}/items/{productoId}")
     public ResponseEntity<CarritoResponse> eliminarProducto(
-            @PathVariable UUID id,
-            @PathVariable UUID productoId) {
+            @PathVariable CarritoId id,
+            @PathVariable Productoid productoId) {
         
         Carrito carrito = carritoService.eliminarProducto(
-                new CarritoId(id), new Productoid(productoId));
+                id, productoId);
         return ResponseEntity.ok(mapToResponse(carrito));
     }
 
     @DeleteMapping("/{id}/items")
-    public ResponseEntity<CarritoResponse> vaciar(@PathVariable UUID id) {
-        Carrito carrito = carritoService.vaciar(new CarritoId(id));
+    public ResponseEntity<CarritoResponse> vaciar(@PathVariable CarritoId id) {
+        Carrito carrito = carritoService.vaciar(id);
         return ResponseEntity.ok(mapToResponse(carrito));
     }
 
     @PostMapping("/{id}/checkout")
-    public ResponseEntity<CarritoResponse> iniciarCheckout(@PathVariable UUID id) {
-        Carrito carrito = carritoService.iniciarCheckout(new CarritoId(id));
+    public ResponseEntity<CarritoResponse> iniciarCheckout(@PathVariable CarritoId id) {
+        Carrito carrito = carritoService.iniciarCheckout(id);
         return ResponseEntity.ok(mapToResponse(carrito));
     }
 

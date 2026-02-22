@@ -1,4 +1,4 @@
-package com.uamishop.catalogo.domain;
+package com.uamishop.shared.domain;
 
 import java.util.UUID;
 import jakarta.persistence.Embeddable;

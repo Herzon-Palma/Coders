@@ -2,6 +2,8 @@ package com.uamishop.ordenes.domain;
 
 import com.uamishop.shared.domain.Money;
 import jakarta.persistence.*;
+
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
@@ -13,7 +15,7 @@ public class ItemOrden {
 
     private UUID productoId;
     private String nombreProducto;
-    private int cantidad;
+    private BigDecimal cantidad;
     
     @Embedded
     private Money precioUnitario;
@@ -27,12 +29,12 @@ public class ItemOrden {
 
     protected ItemOrden() {}
 
-    public ItemOrden(UUID productoId, String nombre, int cantidad, Money precio) {
+    public ItemOrden(UUID productoId, String nombre, BigDecimal cantidad, Money precio) {
         this.productoId = productoId;
         this.nombreProducto = nombre;
         this.cantidad = cantidad;
         this.precioUnitario = precio;
-        this.subtotal = precio.multiply(cantidad);
+        this.subtotal = precio.multiplicar(cantidad);
     }
     
 }

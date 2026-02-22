@@ -1,8 +1,8 @@
 package com.uamishop.ventas.domain;
 
-import com.uamishop.catalogo.domain.Productoid;
 import com.uamishop.shared.domain.ClienteId;
 import com.uamishop.shared.domain.Money;
+import com.uamishop.shared.domain.Productoid;
 import com.uamishop.shared.domain.exception.DomainException;
 import com.uamishop.ventas.domain.exception.CarritoException;
 import jakarta.persistence.*;
@@ -184,5 +184,8 @@ public class Carrito {
     public ClienteId getClienteId() { return clienteId; }
     public EstadoCarrito getEstado() { return estado; }
     public List<ItemCarrito> getItems() { return items; }
+    public List<DescuentoAplicado> getDescuentos() { return descuentos; }
+    public LocalDateTime getFechaActualizacion() { return fechaActualizacion; }
+    
     
 }

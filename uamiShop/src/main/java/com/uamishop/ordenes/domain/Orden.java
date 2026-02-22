@@ -2,7 +2,7 @@ package com.uamishop.ordenes.domain;
 
 import com.uamishop.shared.domain.ClienteId;
 import com.uamishop.shared.domain.Money;
-import com.uamishop.ordenes.domain.exception.OrdenException;
+import com.uamishop.ordenes.domain.OrdenException;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;

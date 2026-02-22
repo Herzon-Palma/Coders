@@ -1,6 +1,8 @@
 package com.uamishop.catalogo.domain;
 
 import com.uamishop.shared.domain.Money;
+import com.uamishop.shared.domain.Productoid;
+
 import java.util.ArrayList;
 import java.util.List;
 import jakarta.persistence.*;

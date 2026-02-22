@@ -1,8 +1,8 @@
 package com.uamishop.ventas.service;
 
-import com.uamishop.catalogo.domain.Productoid;
 import com.uamishop.shared.domain.ClienteId;
 import com.uamishop.shared.domain.Money;
+import com.uamishop.shared.domain.Productoid;
 import com.uamishop.shared.domain.exception.DomainException;
 import com.uamishop.ventas.domain.Carrito;
 import com.uamishop.ventas.domain.CarritoId;

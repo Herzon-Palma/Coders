@@ -3,9 +3,10 @@ package com.uamishop.ventas.domain;
 import java.util.Objects;
 import java.util.regex.Pattern;
 import com.uamishop.shared.domain.Money;
-
-import com.uamishop.catalogo.domain.Productoid;
+import com.uamishop.shared.domain.Productoid;
 import com.uamishop.shared.domain.exception.DomainException;
+
+import jakarta.persistence.Embeddable;
 
 /**
  * Value Object compartido: referencia histórica de producto.
@@ -14,6 +15,7 @@ import com.uamishop.shared.domain.exception.DomainException;
  * dígitos).
  */
 
+@Embeddable
 public record ProductoRef(Productoid productoid, String nombreProducto, String sku, Money precio) {
     private static final Pattern PATRON_SKU = Pattern.compile("^[A-Z]{3}-\\d{3}$");
 
