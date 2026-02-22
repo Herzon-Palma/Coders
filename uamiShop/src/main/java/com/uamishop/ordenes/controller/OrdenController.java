@@ -5,7 +5,7 @@ import com.uamishop.ordenes.domain.OrdenId;
 import com.uamishop.ordenes.domain.InfoEnvio;
 import com.uamishop.ordenes.service.OrdenService;
 import com.uamishop.shared.domain.DireccionEnvio;
-import com.uamishop.shared.exception.ApiError;
+import com.uamishop.ApiError;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
