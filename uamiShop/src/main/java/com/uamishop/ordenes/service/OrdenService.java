@@ -17,6 +17,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
 @Service
 @Transactional
 public class OrdenService {
@@ -87,6 +91,10 @@ public class OrdenService {
     }
 
     // DTO simple
-    public record ItemDto(UUID productoId, String nombre, int cantidad, double precio) {
+    public record ItemDto(
+            @NotNull(message = "El productoId no puede ser nulo") UUID productoId,
+            @NotBlank(message = "El nombre del producto es obligatorio") String nombre,
+            @Positive(message = "La cantidad debe ser mayor a cero") int cantidad,
+            @Positive(message = "El precio debe ser mayor a cero") double precio) {
     }
 }
