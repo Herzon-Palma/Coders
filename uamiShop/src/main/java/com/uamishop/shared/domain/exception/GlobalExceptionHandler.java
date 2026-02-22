@@ -10,7 +10,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DomainException.class)
     public ResponseEntity<String> handleDomainException(DomainException e) {
-        //regresa "400 Bad Request" si rompe una regla de negocio
+        //egresa "400 Bad Request" si rompe una regla de negocio
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
     }
     

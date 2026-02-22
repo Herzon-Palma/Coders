@@ -2,8 +2,8 @@ package com.uamishop.ventas.domain;
 
 
 
-import com.uamishop.catalogo.domain.Productoid;
 import com.uamishop.shared.domain.Money;
+import com.uamishop.shared.domain.Productoid;
 import com.uamishop.shared.domain.exception.DomainException;
 import com.uamishop.shared.domain.ClienteId;
 import org.junit.jupiter.api.BeforeEach;

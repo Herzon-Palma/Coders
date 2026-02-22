@@ -16,7 +16,7 @@ public enum EstadoOrden {
     ENVIADA,
     EN_TRANSITO,
     ENTREGADA,
-    CANCELADA;
+    CANCELADA, PAGADA;
 
     private static final Map<EstadoOrden, Set<EstadoOrden>> TRANSICIONES = Map.of(
             PENDIENTE, Set.of(CONFIRMADA, CANCELADA),

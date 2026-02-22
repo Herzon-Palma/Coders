@@ -1,17 +1,20 @@
 package com.uamishop.ventas.domain;
 
-import com.uamishop.shared.domain.Money;
-import jakarta.persistence.Embeddable;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import java.math.BigDecimal;
+import com.uamishop.shared.domain.Money;
+
+import jakarta.persistence.Embeddable;
 
 @Embeddable
-public record DescuentoAplicado(
-    String codigo,
-    @Enumerated(EnumType.STRING)
-    TipoDescuento tipo,
-    BigDecimal valor,
-    Money montoDescuento
-) {
+public record DescuentoAplicado(String codigo, TipoDescuento tipo, BigDecimal valor, Money montoDescuento) {
+    public Money calcularDescuento(Money subtotal){
+        if (tipo == TipoDescuento.PORCENTAJE) {
+            return subtotal.multiplicar(valor.divide(BigDecimal.valueOf(100)));
+        } else if (tipo == TipoDescuento.MONTO_FIJO) {
+            return new Money(valor, subtotal.moneda());
+        } else {
+            throw new IllegalArgumentException("Tipo de descuento no soportado");
+        }
+    }
+
 }

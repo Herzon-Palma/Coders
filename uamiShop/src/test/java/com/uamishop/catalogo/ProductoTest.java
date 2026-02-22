@@ -1,10 +1,10 @@
 package com.uamishop.catalogo;
 
 import com.uamishop.catalogo.domain.Categoriaid;
+import com.uamishop.catalogo.domain.Imagen;
 import com.uamishop.shared.domain.Money;
 import com.uamishop.shared.domain.exception.DomainException;
 import com.uamishop.catalogo.domain.Producto;
-import com.uamishop.catalogo.domain.Imagen;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;

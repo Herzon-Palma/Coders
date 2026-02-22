@@ -7,12 +7,23 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-
+@Entity
+@Table(name = "items_carrito")
 public class ItemCarrito {
     
+    @EmbeddedId
     private final ItemCarritoId id;
+
+    @Embedded
     private final ProductoRef productoRef;
+
     private BigDecimal cantidad;
+
+    @Embedded
+    @AttributeOverrides({
+        @AttributeOverride(name = "amount", column = @Column(name = "precio_unitario_amount")),
+        @AttributeOverride(name = "currency", column = @Column(name = "precio_unitario_currency"))
+    }) // Utilizamos AttributeOverrides para mapear los campos de Money a columnas específicas en la tabla de items
     private final Money precioUnitario;
 
     public ItemCarrito(ProductoRef productoRef, int cantidad, Money precioUnitario) {

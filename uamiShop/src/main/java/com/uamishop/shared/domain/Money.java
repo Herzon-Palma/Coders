@@ -20,19 +20,7 @@ public record Money(@Column(name = "cantidad") BigDecimal cantidad, @Column(name
         return new Money(BigDecimal.valueOf(cantidad), "MXN");
     }
 
-    public static Money of(double cantidad) {
-        return pesos(cantidad);
-    }
-
-    public Money multiplicar(int factor) { // Soluciona error en ItemCarrito
-        return new Money(this.cantidad.multiply(BigDecimal.valueOf(factor)), this.moneda);
-    }
-
-    public Money multiply(int factor) {
-        return multiplicar(factor);
-    }
-
-    public Money multiplicar(BigDecimal factor) {
+    public Money multiplicar(BigDecimal factor) { // Soluciona error en ItemCarrito
         return new Money(this.cantidad.multiply(factor), this.moneda);
     }
 
@@ -54,5 +42,9 @@ public record Money(@Column(name = "cantidad") BigDecimal cantidad, @Column(name
         if (!this.moneda.equals(otro.moneda)) {
             throw new IllegalArgumentException("No se pueden sumar montos de diferentes monedas"); // RN-VO-01
         }
+    }
+
+    public Money dividir(int divisor) {
+        return new Money(this.cantidad.divide(BigDecimal.valueOf(divisor), java.math.RoundingMode.HALF_UP), this.moneda);
     }
 }
