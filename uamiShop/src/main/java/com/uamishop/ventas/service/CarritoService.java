@@ -3,7 +3,7 @@ package com.uamishop.ventas.service;
 import com.uamishop.shared.domain.ClienteId;
 import com.uamishop.shared.domain.Money;
 import com.uamishop.shared.domain.Productoid;
-import com.uamishop.shared.domain.exception.DomainException;
+import com.uamishop.shared.domain.exception.ResourceNotFoundException;
 import com.uamishop.ventas.domain.Carrito;
 import com.uamishop.ventas.domain.CarritoId;
 import com.uamishop.shared.domain.ProductoRef;
@@ -32,7 +32,7 @@ public class CarritoService {
     @Transactional(readOnly = true)
     public Carrito obtenerCarrito(CarritoId carritoId) {
         return carritoRepository.findById(carritoId)
-                .orElseThrow(() -> new DomainException("Carrito no encontrado con ID: " + carritoId.id()));
+                .orElseThrow(() -> new ResourceNotFoundException("Carrito no encontrado con ID: " + carritoId.id()));
     }
 
     @Transactional

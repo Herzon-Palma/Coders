@@ -7,7 +7,7 @@ import com.uamishop.shared.domain.ProductoRef;
 import com.uamishop.shared.domain.DireccionEnvio;
 import com.uamishop.ordenes.domain.*;
 import com.uamishop.ordenes.domain.OrdenException;
-import com.uamishop.ordenes.domain.exception.OrdenDomainException;
+import com.uamishop.shared.domain.exception.ResourceNotFoundException;
 import com.uamishop.ordenes.repository.OrdenJpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -87,7 +87,7 @@ public class OrdenService {
 
     public Orden buscar(UUID id) {
         return repository.findById(new OrdenId(id))
-                .orElseThrow(() -> new OrdenDomainException("Orden no encontrada"));
+                .orElseThrow(() -> new ResourceNotFoundException("Orden no encontrada"));
     }
 
     // DTO simple

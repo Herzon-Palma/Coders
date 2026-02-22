@@ -7,6 +7,7 @@ import com.uamishop.catalogo.controller.dto.*;
 import com.uamishop.shared.domain.Money;
 import com.uamishop.shared.domain.Productoid;
 import com.uamishop.shared.domain.exception.DomainException;
+import com.uamishop.shared.domain.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,25 +30,24 @@ public class ProductoService {
     public ProductoResponse crearProducto(ProductoRequest request) {
         Categoriaid categoriaId = new Categoriaid(request.categoriaid());
         if (!categoriaRepository.existsById(categoriaId)) {
-            throw new DomainException("La categoría especificada no existe");
+            throw new ResourceNotFoundException("La categoría especificada no existe");
         }
 
         Producto producto = Producto.crear(
                 request.nombre(),
                 request.descripcion(),
                 new Money(request.precio(), request.moneda()), // Asumimos USD, esto podría ser parte del request
-                categoriaId
-        );
+                categoriaId);
         return productoRepository.save(producto).toResponse();
     }
 
     @Transactional(readOnly = true)
-    public ProductoResponse buscarPorId(UUID id){
+    public ProductoResponse buscarPorId(UUID id) {
         Productoid productoid = new Productoid(id);
-        //Utiolizamos Optional para manejar el posible nulo
+        // Utiolizamos Optional para manejar el posible nulo
         Optional<Producto> productoOpt = productoRepository.findById(productoid);
         if (productoOpt.isEmpty()) {
-            throw new DomainException("Producto no encontrado");
+            throw new ResourceNotFoundException("Producto no encontrado");
         }
         return productoOpt.get().toResponse();
     }
@@ -62,7 +62,7 @@ public class ProductoService {
     public ProductoResponse actualizar(UUID id, ProductoRequest request) {
         Productoid productoid = new Productoid(id);
         Producto producto = productoRepository.findById(productoid)
-            .orElseThrow(() -> new DomainException("Producto no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado"));
 
         producto.actualizar(request.nombre(), request.descripcion(), new Money(request.precio(), request.moneda()));
         return productoRepository.save(producto).toResponse();
@@ -71,11 +71,11 @@ public class ProductoService {
     @Transactional
     public void activar(UUID id) {
         Productoid productoid = new Productoid(id);
-    
-        Producto producto = productoRepository.findById(productoid)
-            .orElseThrow(() -> new DomainException("Producto no encontrado"));
 
-        producto.activar(); 
+        Producto producto = productoRepository.findById(productoid)
+                .orElseThrow(() -> new DomainException("Producto no encontrado"));
+
+        producto.activar();
         productoRepository.save(producto);
     }
 
@@ -83,12 +83,10 @@ public class ProductoService {
     public void desactivar(UUID id) {
         Productoid productoid = new Productoid(id);
         Producto producto = productoRepository.findById(productoid)
-            .orElseThrow(() -> new DomainException("Producto no encontrado"));
+                .orElseThrow(() -> new DomainException("Producto no encontrado"));
 
         producto.desactivar();
         productoRepository.save(producto);
     }
-
-    
 
 }
