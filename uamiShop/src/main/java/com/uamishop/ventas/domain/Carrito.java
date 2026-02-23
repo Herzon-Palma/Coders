@@ -51,6 +51,17 @@ public class Carrito {
     private final LocalDateTime fechaCreacion;
     private LocalDateTime fechaActualizacion;
 
+    // Constructor sin argumentos requerido por JPA
+    protected Carrito() {
+        this.id = null;
+        this.clienteId = null;
+        this.items = new ArrayList<>();
+        this.descuentos = new ArrayList<>();
+        this.estado = EstadoCarrito.ACTIVO;
+        this.fechaCreacion = LocalDateTime.now();
+        this.fechaActualizacion = LocalDateTime.now();
+    }
+
     private Carrito(ClienteId clienteId) {
         this.id = CarritoId.generar();
         this.clienteId = clienteId;
