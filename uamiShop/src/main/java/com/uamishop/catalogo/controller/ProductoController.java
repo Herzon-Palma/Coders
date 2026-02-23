@@ -16,7 +16,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 
-
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -65,7 +65,7 @@ public class ProductoController {
     @PostMapping
     public ResponseEntity<ProductoResponse> crearProducto(@Valid @RequestBody ProductoRequest request) {
         ProductoResponse response = productoService.crearProducto(request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @Operation(summary = "Obtener producto por ID", description = "Obtiene los detalles de un producto específico utilizando su ID.")

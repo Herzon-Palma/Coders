@@ -1,4 +1,4 @@
-package com.uamishop.catalogo;
+package com.uamishop.catalogo.domain;
 
 import com.uamishop.catalogo.domain.Categoriaid;
 import com.uamishop.catalogo.domain.Imagen;

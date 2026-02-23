@@ -38,7 +38,7 @@ public class Producto {
         this.categoriaId = null; // Necesario para evitar error de final
     }
 
-    private Producto(Productoid id, String nombre, String descripcion, Money precio, Categoriaid categoriaId) {
+    public Producto(Productoid id, String nombre, String descripcion, Money precio, Categoriaid categoriaId) {
         this.id = id;
         this.nombre = nombre;
         this.descripcion = descripcion;
