@@ -1,0 +1,12 @@
+package com.uamishop; // Debe coincidir con la carpeta src/main/java/com/uamishop
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class TiendaUamiApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(TiendaUamiApplication.class, args);
+    }
+}
+

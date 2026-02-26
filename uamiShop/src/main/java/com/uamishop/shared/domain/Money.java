@@ -1,0 +1,60 @@
+package com.uamishop.shared.domain;
+
+import java.math.BigDecimal;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.Column;
+
+/**
+ * Value Object compartido: Money.
+ * - RN-VO-01: No se pueden sumar/restar monedas con distinta divisa.
+ * - RN-VO-02: No se permiten resultados negativos en resta.
+ */
+
+@Embeddable
+public record Money(@Column(name = "cantidad") BigDecimal cantidad, @Column(name = "moneda") String moneda) {
+    public static Money zero() {
+        return new Money(BigDecimal.ZERO, "MXN");
+    }
+
+    public static Money pesos(double cantidad) {
+        return new Money(BigDecimal.valueOf(cantidad), "MXN");
+    }
+
+    public Money multiplicar(BigDecimal factor) { // Soluciona error en ItemCarrito
+        return new Money(this.cantidad.multiply(factor), this.moneda);
+    }
+
+    public Money sumar(Money otro) {
+        validarMoneda(otro);
+        return new Money(this.cantidad.add(otro.cantidad), this.moneda);
+    }
+
+    public Money restar(Money otro) {
+        validarMoneda(otro);
+        BigDecimal resultado = this.cantidad.subtract(otro.cantidad);
+        if (resultado.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("El resultado de una resta no puede ser negativo"); // RN-VO-02
+        }
+        return new Money(resultado, this.moneda);
+    }
+
+    private void validarMoneda(Money otro) {
+        if (!this.moneda.equals(otro.moneda)) {
+            throw new IllegalArgumentException("No se pueden sumar montos de diferentes monedas"); // RN-VO-01
+        }
+    }
+
+    public Money dividir(int divisor) {
+        return new Money(this.cantidad.divide(BigDecimal.valueOf(divisor), java.math.RoundingMode.HALF_UP), this.moneda);
+    }
+
+    public static Money parse(String trim) {
+        String[] partes = trim.split(" ");
+        if (partes.length != 2) {
+            throw new IllegalArgumentException("Formato inválido para Money. Se esperaba 'cantidad moneda'");
+        }
+        BigDecimal cantidad = new BigDecimal(partes[0]);
+        String moneda = partes[1];
+        return new Money(cantidad, moneda);
+    }
+}
