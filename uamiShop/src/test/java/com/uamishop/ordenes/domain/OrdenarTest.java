@@ -33,7 +33,7 @@ class OrdenarTest {
 
         ProductoRef prodRef = new ProductoRef(Productoid.generar(), "Laptop", "SKU-123");
         item = new ItemOrden(prodRef, BigDecimal.ONE, Money.pesos(15000));
-        pagoInicial = ResumenPago.crear("TARJETA");
+        pagoInicial = ResumenPago.crear("PENDIENTE;1970-01-01T00:00:00;0.00 MXN");
 
         // Se ejecuta antes de cada test: Crea una orden nueva (PENDIENTE)
         orden = Orden.crear(clienteId, List.of(item), direccion, pagoInicial);

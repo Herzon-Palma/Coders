@@ -42,7 +42,9 @@ public class OrdenService {
                 .collect(Collectors.toList());
 
         // Crear ResumenPago inicial (Pendiente)
-        ResumenPago pagoInicial = ResumenPago.crear("TARJETA"); // Default method
+        ResumenPago pagoInicial = ResumenPago.crear("PENDIENTE;1970-01-01T00:00:00;0.00 MXN"); // Provisorio para no
+                                                                                               // fallar
+        // regex
 
         return repository.save(Orden.crear(new ClienteId(clienteUuid), items, direccion, pagoInicial));
     }

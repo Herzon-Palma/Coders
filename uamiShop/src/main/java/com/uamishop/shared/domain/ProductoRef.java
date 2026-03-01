@@ -1,6 +1,7 @@
 package com.uamishop.shared.domain;
 
 import jakarta.persistence.Embeddable;
+import jakarta.persistence.Embedded;
 import java.util.Objects;
 import java.util.regex.Pattern;
 import com.uamishop.shared.domain.exception.DomainException;
@@ -23,25 +24,47 @@ import com.uamishop.shared.domain.exception.DomainException;
  */
 
 @Embeddable
-public record ProductoRef(Productoid productoid, String nombreProducto, String sku) {
+public class ProductoRef {
     private static final Pattern PATRON_SKU = Pattern.compile("^[A-Z]{3}-\\d{3}$");
 
-    public ProductoRef {
+    @Embedded
+    @jakarta.persistence.AttributeOverride(name = "valor", column = @jakarta.persistence.Column(name = "producto_id"))
+    private Productoid productoid;
+
+    private String nombreProducto;
+    private String sku;
+
+    protected ProductoRef() {
+    }
+
+    public ProductoRef(Productoid productoid, String nombreProducto, String sku) {
         Objects.requireNonNull(productoid, "El productRef ProductoId no puede ser nulo");
         Objects.requireNonNull(sku, "El productRef SKU no puede ser nulo");
         Objects.requireNonNull(nombreProducto, "El productRef nombre no puede ser nulo");
-        sku = sku.trim().toUpperCase();
-        nombreProducto = nombreProducto.trim();
-        if (!PATRON_SKU.matcher(sku).matches()) {
+        this.sku = sku.trim().toUpperCase();
+        this.nombreProducto = nombreProducto.trim();
+        if (!PATRON_SKU.matcher(this.sku).matches()) {
             throw new DomainException("El productRef SKU debe tener formato AAA-000"); // RN-VO-05
         }
-
-        if (nombreProducto.isEmpty() || nombreProducto.isBlank()) {
+        if (this.nombreProducto.isEmpty() || this.nombreProducto.isBlank()) {
             throw new DomainException("El productRef nombre no puede estar vacío");
         }
+        this.productoid = productoid;
     }
 
     public Productoid getProductId() {
         return productoid;
+    }
+
+    public Productoid productoid() {
+        return productoid;
+    }
+
+    public String nombreProducto() {
+        return nombreProducto;
+    }
+
+    public String sku() {
+        return sku;
     }
 }

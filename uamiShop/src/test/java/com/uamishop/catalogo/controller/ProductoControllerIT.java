@@ -41,43 +41,39 @@ public class ProductoControllerIT {
     @Test
     @DisplayName("POST /api/productos - Crear producto exitosamente (RestTemplate)")
     void crearProductoTest() {
-      
+
         Categoriaid categoriaId = Categoriaid.generar();
         categoriaRepository.save(new Categoria(categoriaId, "Electrónicos", "Gadgets"));
 
         ProductoRequest request = new ProductoRequest(
-            "Laptop Gaming",
-            "Procesador i7",
-            BigDecimal.valueOf(1500.00),
-            "MXN",
-            categoriaId.getValue()
-        );
+                "Laptop Gaming",
+                "Procesador i7",
+                BigDecimal.valueOf(1500.00),
+                "MXN",
+                categoriaId.getValue());
 
-        
         ResponseEntity<ProductoResponse> response = restTemplate.postForEntity(
-            "/api/productos", 
-            request, 
-            ProductoResponse.class
-        );
+                "/api/productos",
+                request,
+                ProductoResponse.class);
 
-        
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Laptop Gaming", response.getBody().nombre());
     }
 
-
-    //Haré un test para el caso de obtener un producto que no existe, esperando un 400 Not Found y un mensaje de error adecuado
+    // Haré un test para el caso de obtener un producto que no existe, esperando un
+    // 400 Not Found y un mensaje de error adecuado
     @Test
     @DisplayName(" 404 producto no encontrado")
     void obtenerProductoInexistente() {
         UUID idInexistente = UUID.randomUUID();
 
-        // Usamos exchange para obtener el cuerpo como un String o un Map y validar el error
+        // Usamos exchange para obtener el cuerpo como un String o un Map y validar el
+        // error
         ResponseEntity<String> response = restTemplate.getForEntity(
-            "/api/productos/" + idInexistente, 
-            String.class
-        );
+                "/api/productos/" + idInexistente,
+                String.class);
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertTrue(response.getBody().contains("Producto no encontrado"));
@@ -86,27 +82,23 @@ public class ProductoControllerIT {
     @Test
     @DisplayName("Actualizar producto")
     void actualizarProductoTest() {
-        
+
         Categoriaid catId = Categoriaid.generar();
         categoriaRepository.save(new Categoria(catId, "Hardware", "PC Parts"));
-        
+
         Productoid pId = Productoid.generar();
         productoRepository.save(new Producto(pId, "Teclado", "Mecánico", Money.pesos(50), catId));
 
         ProductoRequest updateRequest = new ProductoRequest(
-            "Teclado RGB", "Mecánico Gamer", BigDecimal.valueOf(80), "MXN", catId.getValue()
-        );
+                "Teclado RGB", "Mecánico Gamer", BigDecimal.valueOf(70), "MXN", catId.getValue());
 
-        
         HttpEntity<ProductoRequest> requestEntity = new HttpEntity<>(updateRequest);
         ResponseEntity<ProductoResponse> response = restTemplate.exchange(
-            "/api/productos/" + pId.getValue(),
-            HttpMethod.PUT,
-            requestEntity,
-            ProductoResponse.class
-        );
+                "/api/productos/" + pId.getValue(),
+                HttpMethod.PUT,
+                requestEntity,
+                ProductoResponse.class);
 
-        
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("Teclado RGB", response.getBody().nombre());
     }

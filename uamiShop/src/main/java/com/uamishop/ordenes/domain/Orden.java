@@ -277,6 +277,10 @@ public class Orden {
     // CONSULTAS
     // ========================================================================
 
+    public EstadoOrden getEstado() {
+        return estado;
+    }
+
     public EstadoOrden obtenerEstadoActual() {
         return estado;
     }
