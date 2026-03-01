@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class CarritoControllerIT {
 
-    private static final String BASE_URL = "/api/carritos";
+    private static final String BASE_URL = "/api/v1/carritos";
 
     @Autowired
     private TestRestTemplate restTemplate;
@@ -39,7 +39,7 @@ class CarritoControllerIT {
     }
 
     @Nested
-    @DisplayName("POST /api/carritos")
+    @DisplayName("POST /api/v1/carritos")
     class CrearCarrito {
 
         @Test
@@ -60,7 +60,7 @@ class CarritoControllerIT {
     }
 
     @Nested
-    @DisplayName("GET /api/carritos/{id}")
+    @DisplayName("GET /api/v1/carritos/{id}")
     class ObtenerCarrito {
 
         @Test
@@ -79,7 +79,7 @@ class CarritoControllerIT {
     }
 
     @Nested
-    @DisplayName("POST /api/carritos/{id}/items")
+    @DisplayName("POST /api/v1/carritos/{id}/items")
     class AgregarProducto {
 
         @Test

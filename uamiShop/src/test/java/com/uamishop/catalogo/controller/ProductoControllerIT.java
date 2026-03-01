@@ -39,7 +39,7 @@ public class ProductoControllerIT {
     }
 
     @Test
-    @DisplayName("POST /api/productos - Crear producto exitosamente (RestTemplate)")
+    @DisplayName("POST /api/v1/productos - Crear producto exitosamente (RestTemplate)")
     void crearProductoTest() {
 
         Categoriaid categoriaId = Categoriaid.generar();
@@ -53,7 +53,7 @@ public class ProductoControllerIT {
                 categoriaId.getValue());
 
         ResponseEntity<ProductoResponse> response = restTemplate.postForEntity(
-                "/api/productos",
+                "/api/v1/productos",
                 request,
                 ProductoResponse.class);
 
@@ -72,7 +72,7 @@ public class ProductoControllerIT {
         // Usamos exchange para obtener el cuerpo como un String o un Map y validar el
         // error
         ResponseEntity<String> response = restTemplate.getForEntity(
-                "/api/productos/" + idInexistente,
+                "/api/v1/productos/" + idInexistente,
                 String.class);
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
@@ -94,7 +94,7 @@ public class ProductoControllerIT {
 
         HttpEntity<ProductoRequest> requestEntity = new HttpEntity<>(updateRequest);
         ResponseEntity<ProductoResponse> response = restTemplate.exchange(
-                "/api/productos/" + pId.getValue(),
+                "/api/v1/productos/" + pId.getValue(),
                 HttpMethod.PUT,
                 requestEntity,
                 ProductoResponse.class);

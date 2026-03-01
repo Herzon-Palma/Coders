@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/carritos")
+@RequestMapping("/api/v1/carritos")
 @Tag(name = "Carritos", description = "API para gestionar carritos de compras del subdominio de Ventas")
 public class CarritoController {
 

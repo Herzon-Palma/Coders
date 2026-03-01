@@ -28,53 +28,53 @@ import jakarta.transaction.Transactional;
 @AutoConfigureMockMvc // Configura MockMvc para pruebas de integración
 @Transactional
 public class CategoriaControllerIT {
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper; // Para convertir objetos a JSON
-    @Autowired
-    private CategoriaController categoriaController;
+        @Autowired
+        private ObjectMapper objectMapper; // Para convertir objetos a JSON
+        @Autowired
+        private CategoriaController categoriaController;
 
-    @Autowired
-    private CategoriaRepository categoriaRepository;
+        @Autowired
+        private CategoriaRepository categoriaRepository;
 
-    @Test
-    @DisplayName("Crear categoría exitosamente")
-    void crearCategoriaTest() throws Exception {
-        // Aquí iría la lógica para crear una categoría usando MockMvc y verificar la respuesta
-        CategoriaRequest request = new CategoriaRequest(
-            "Electrónicos",
-            "Dispositivos electrónicos de todo tipo"
-        );
+        @Test
+        @DisplayName("Crear categoría exitosamente")
+        void crearCategoriaTest() throws Exception {
+                // Aquí iría la lógica para crear una categoría usando MockMvc y verificar la
+                // respuesta
+                CategoriaRequest request = new CategoriaRequest(
+                                "Electrónicos",
+                                "Dispositivos electrónicos de todo tipo");
 
-        // Ejecutamos y verificamos
-        mockMvc.perform(post("/api/categorias")
-            .contentType("application/json")
-            .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.nombre").value("Electrónicos"))
-            .andExpect(jsonPath("$.descripcion").value("Dispositivos electrónicos de todo tipo"));
-    }
+                // Ejecutamos y verificamos
+                mockMvc.perform(post("/api/v1/categorias")
+                                .contentType("application/json")
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isCreated())
+                                .andExpect(jsonPath("$.nombre").value("Electrónicos"))
+                                .andExpect(jsonPath("$.descripcion").value("Dispositivos electrónicos de todo tipo"));
+        }
 
-    @Test
-    @DisplayName("Actualizar una categoría existente")
-    void actualizarCategoriaTest() throws Exception {
-        // Primero creamos una categoría para asegurarnos de que existe
-        Categoriaid categoriaId = Categoriaid.generar();
-        Categoria categoria = new Categoria(categoriaId, "Electrónicos", "Dispositivos electrónicos");
-        categoriaRepository.save(categoria);
-        
-        CategoriaRequest request = new CategoriaRequest(
-            "Electrónicos Actualizados",
-            "Dispositivos electrónicos actualizados de todo tipo"
-        );
+        @Test
+        @DisplayName("Actualizar una categoría existente")
+        void actualizarCategoriaTest() throws Exception {
+                // Primero creamos una categoría para asegurarnos de que existe
+                Categoriaid categoriaId = Categoriaid.generar();
+                Categoria categoria = new Categoria(categoriaId, "Electrónicos", "Dispositivos electrónicos");
+                categoriaRepository.save(categoria);
 
-        mockMvc.perform(put("/api/categorias/" + categoriaId.getValue())
-            .contentType("application/json")
-            .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.nombre").value("Electrónicos Actualizados"))
-            .andExpect(jsonPath("$.descripcion").value("Dispositivos electrónicos actualizados de todo tipo"));
-    }
+                CategoriaRequest request = new CategoriaRequest(
+                                "Electrónicos Actualizados",
+                                "Dispositivos electrónicos actualizados de todo tipo");
+
+                mockMvc.perform(put("/api/v1/categorias/" + categoriaId.getValue())
+                                .contentType("application/json")
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.nombre").value("Electrónicos Actualizados"))
+                                .andExpect(jsonPath("$.descripcion")
+                                                .value("Dispositivos electrónicos actualizados de todo tipo"));
+        }
 }
