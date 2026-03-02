@@ -19,7 +19,7 @@ public class OpenApiConfig {
                                                 .version("1.0")
                                                 .description("Ejemplo de API del curso TSIS - Módulo Órdenes")
                                                 .contact(new Contact()
-                                                                .name("Humberto")
+                                                                .name("Coders")
                                                                 .url("www.miurl.com")
                                                                 .email("yo@xanum.uam.mx"))
                                                 .license(new License()
