@@ -3,6 +3,8 @@ package com.uamishop.catalogo.service;
 import com.uamishop.catalogo.domain.*;
 import com.uamishop.catalogo.repository.ProductoRepository;
 import com.uamishop.catalogo.repository.CategoriaRepository;
+import com.uamishop.catalogo.api.CatalogoApi;
+import com.uamishop.catalogo.api.ProductoResumen;
 import com.uamishop.catalogo.controller.dto.*;
 import com.uamishop.shared.domain.Money;
 import com.uamishop.shared.domain.Productoid;
@@ -17,7 +19,7 @@ import java.util.stream.Collectors;
 import java.util.Optional;
 
 @Service
-public class ProductoService {
+public class ProductoService implements CatalogoApi {
     private final ProductoRepository productoRepository;
     private final CategoriaRepository categoriaRepository;
 
@@ -36,7 +38,8 @@ public class ProductoService {
         Producto producto = Producto.crear(
                 request.nombre(),
                 request.descripcion(),
-                new Money(request.precio(), request.moneda()), // Asumimos USD, esto podría ser parte del request
+                request.sku(),
+                new Money(request.precio(), request.moneda()),
                 categoriaId);
         return productoRepository.save(producto).toResponse();
     }
@@ -89,4 +92,71 @@ public class ProductoService {
         productoRepository.save(producto);
     }
 
+
+    //Aquí inicia la implementación de nuesta API de catalogo
+
+    @Override
+    public Optional<ProductoResumen> buscarProducto(UUID productoId) {
+        return productoRepository.findById(new Productoid(productoId))
+                .map(this::toResumen); 
+                /*  el .map funciona como un "ifPresent" que transforma el Producto 
+                   a ProductoResumen si existe, o devuelve Optional.empty() si no existe
+                */
+    }
+    
+    @Override
+    public List<ProductoResumen> buscarProductos(List<UUID> productoIds) {
+        List<Productoid> ids = productoIds.stream()
+                .map(Productoid::new)
+                .collect(Collectors.toList());
+                // el collect simplemente es para convertir el Stream 
+                // de Productoid a una List<Productoid>
+        return productoRepository.findAllById(ids).stream()
+                .map(this::toResumen)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public boolean existeProducto(UUID productoId) {
+        return productoRepository.existsById(new Productoid(productoId));
+    }
+
+    @Override
+    public boolean estaDisponible(UUID productoId) {
+        return productoRepository.findById(new Productoid(productoId))
+                .map(Producto::isDisponible)
+                .orElse(false);
+    }
+
+    @Override
+    public Optional<Money> obtenerPrecio(UUID productoId) {
+        return productoRepository.findById(new Productoid(productoId))
+                .map(Producto::getPrecio);
+    }
+
+    @Override
+    public boolean existeCategoria(UUID categoriaId) {
+        return categoriaRepository.existsById(new Categoriaid(categoriaId));}
+
+    //Utilizamos este mapper para convertir de Producto a ProductoResumen, que es lo que exponemos en la API pública
+    //para que otros dominios puedan consultar sin exponer toda la información interna del producto.
+    private ProductoResumen toResumen(Producto producto) {
+        String categoriaNombre = categoriaRepository
+                .findById(producto.getCategoriaId())
+                .map(Categoria::getNombre)
+                .orElse(null);
+
+        return new ProductoResumen(
+                producto.getId().valor(),
+                producto.getNombre(),
+                producto.getSku(),
+                producto.getPrecio().cantidad(),
+                producto.getPrecio().moneda(),
+                producto.getCategoriaId().valor(),
+                categoriaNombre,
+                producto.isDisponible()
+        );
+    }
+
+    
 }

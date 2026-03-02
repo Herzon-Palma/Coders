@@ -17,14 +17,14 @@ class ProductoTest {
     @DisplayName("RN-CAT-01: No debe permitir nombres menores a 3 caracteres")
     void nombreDemasiadoCorto() {
         assertThrows(DomainException.class, () -> {
-            Producto.crear("Ab", "Descripción válida", Money.pesos(100), mockCategoriaId);
+            Producto.crear("Ab", "Descripción válida", "ABC-001", Money.pesos(100), mockCategoriaId);
         });
     }
 
     @Test
     @DisplayName("RN-CAT-05: No debe permitir incrementos de precio mayores al 50%")
     void incrementoPrecioExcesivo() {
-        Producto producto = Producto.crear("Laptop Gaming", "Core i9", Money.pesos(1000), mockCategoriaId);
+        Producto producto = Producto.crear("Laptop Gaming", "Core i9", "LAP-001", Money.pesos(1000), mockCategoriaId);
         Money precioMuyCaro = Money.pesos(1501); // 50.1% de incremento
         
         Exception exception = assertThrows(DomainException.class, () -> {
@@ -36,7 +36,7 @@ class ProductoTest {
     @Test
     @DisplayName("RN-CAT-09: No debe permitir activar producto sin imágenes")
     void activarSinImagenes() {
-        Producto producto = Producto.crear("Smartphone", "Gama alta", Money.pesos(500), mockCategoriaId);
+        Producto producto = Producto.crear("Smartphone", "Gama alta", "SMR-001", Money.pesos(500), mockCategoriaId);
         
         assertThrows(DomainException.class, producto::activar);
     }
@@ -52,7 +52,7 @@ class ProductoTest {
     @Test
     @DisplayName("Prueba de Flujo Exitoso: Crear, agregar imagen y activar")
     void flujoExitoso() {
-        Producto producto = Producto.crear("Monitor 4K", "32 pulgadas", Money.pesos(300), mockCategoriaId);
+        Producto producto = Producto.crear("Monitor 4K", "32 pulgadas", "MON-001", Money.pesos(300), mockCategoriaId);
         Imagen img = new Imagen("https://uami.mx/foto.png", "Vista frontal", 1);
         
         producto.agregarImagen(img);

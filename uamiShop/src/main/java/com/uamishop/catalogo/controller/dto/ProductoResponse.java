@@ -13,12 +13,18 @@ public record ProductoResponse(
     String nombre,
 
     @Schema(description = "Descripción detallada del producto", example = "Camiseta de algodón 100% con estampado frontal")
-    String descripcion, 
+    String descripcion,
+
+    @Schema(description = "SKU del producto", example = "CAM-001")
+    String sku,
     
     BigDecimal precio, 
     
     @Schema(description = "Moneda del precio del producto", example = "MXN")
     String moneda, 
-    UUID categoriaid) {
+    UUID categoriaid,
+
+    @Schema(description = "Disponibilidad del producto")
+    boolean disponible) {
 
 }

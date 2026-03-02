@@ -48,6 +48,7 @@ public class ProductoControllerIT {
         ProductoRequest request = new ProductoRequest(
                 "Laptop Gaming",
                 "Procesador i7",
+                "LAP-001",
                 BigDecimal.valueOf(1500.00),
                 "MXN",
                 categoriaId.getValue());
@@ -87,10 +88,10 @@ public class ProductoControllerIT {
         categoriaRepository.save(new Categoria(catId, "Hardware", "PC Parts"));
 
         Productoid pId = Productoid.generar();
-        productoRepository.save(new Producto(pId, "Teclado", "Mecánico", Money.pesos(50), catId));
+        productoRepository.save(new Producto(pId, "Teclado", "Mecánico", "TEC-001", Money.pesos(50), catId));
 
         ProductoRequest updateRequest = new ProductoRequest(
-                "Teclado RGB", "Mecánico Gamer", BigDecimal.valueOf(70), "MXN", catId.getValue());
+                "Teclado RGB", "Mecánico Gamer", "TEC-001", BigDecimal.valueOf(70), "MXN", catId.getValue());
 
         HttpEntity<ProductoRequest> requestEntity = new HttpEntity<>(updateRequest);
         ResponseEntity<ProductoResponse> response = restTemplate.exchange(
