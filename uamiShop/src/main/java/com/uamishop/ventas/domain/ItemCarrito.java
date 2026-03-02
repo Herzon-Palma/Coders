@@ -19,7 +19,7 @@ public class ItemCarrito {
             // IMPORTANTE: Aquí renombramos el 'valor' que viene dentro de ProductoRef ->
             // Productoid
             // Usamos la notación de punto para llegar al campo interno
-            @AttributeOverride(name = "productoid.valor", column = @Column(name = "producto_id")),
+            @AttributeOverride(name = "productoId.id", column = @Column(name = "producto_id")),
             @AttributeOverride(name = "nombreProducto", column = @Column(name = "producto_nombre")),
             @AttributeOverride(name = "sku", column = @Column(name = "producto_sku"))
     })

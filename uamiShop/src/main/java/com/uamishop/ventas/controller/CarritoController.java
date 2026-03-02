@@ -2,11 +2,9 @@ package com.uamishop.ventas.controller;
 
 import com.uamishop.ApiError;
 import com.uamishop.shared.domain.ClienteId;
-import com.uamishop.shared.domain.Money;
-import com.uamishop.shared.domain.Productoid;
+import com.uamishop.shared.domain.ProductoId;
 import com.uamishop.ventas.domain.Carrito;
 import com.uamishop.ventas.domain.CarritoId;
-import com.uamishop.shared.domain.ProductoRef;
 import com.uamishop.ventas.service.CarritoService;
 import com.uamishop.ventas.controller.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -72,14 +70,8 @@ public class CarritoController {
                         @Parameter(description = "ID del carrito") @PathVariable CarritoId id,
                         @Valid @RequestBody CarritoRequest request) {
 
-                // En una implementación real, buscarías el producto en el catálogo para llenar
-                // el ProductoRef
-                ProductoRef ref = new ProductoRef(new Productoid(request.productoId()), "Producto", "TMP-123");
-                // El precio vendría del servicio de catálogo
-                Money precio = new Money(new java.math.BigDecimal("100.00"), "MXN");
-
                 Carrito carrito = carritoService.agregarProducto(
-                                id, ref, request.cantidad(), precio);
+                                id, new ProductoId(request.productoId()), request.cantidad());
 
                 return ResponseEntity.ok(mapToResponse(carrito));
         }
@@ -95,7 +87,7 @@ public class CarritoController {
         @PutMapping("/{id}/items/{productoId}")
         public ResponseEntity<CarritoResponse> modificarCantidad(
                         @Parameter(description = "ID del carrito") @PathVariable CarritoId id,
-                        @Parameter(description = "ID del producto a modificar") @PathVariable Productoid productoId,
+                        @Parameter(description = "ID del producto a modificar") @PathVariable ProductoId productoId,
                         @NotNull(message = "La nueva cantidad es obligatoria") @Min(value = 1, message = "La cantidad mínima es 1 (RN-VEN-05)") @Max(value = 10, message = "La cantidad máxima es 10 (RN-VEN-02)") @RequestBody Integer nuevaCantidad) {
 
                 Carrito carrito = carritoService.modificarCantidad(
@@ -114,7 +106,7 @@ public class CarritoController {
         @DeleteMapping("/{id}/items/{productoId}")
         public ResponseEntity<CarritoResponse> eliminarProducto(
                         @Parameter(description = "ID del carrito") @PathVariable CarritoId id,
-                        @Parameter(description = "ID del producto a eliminar") @PathVariable Productoid productoId) {
+                        @Parameter(description = "ID del producto a eliminar") @PathVariable ProductoId productoId) {
 
                 Carrito carrito = carritoService.eliminarProducto(
                                 id, productoId);
@@ -155,7 +147,7 @@ public class CarritoController {
         private CarritoResponse mapToResponse(Carrito c) {
                 var itemsResponse = c.getItems().stream()
                                 .map(item -> new ItemResponse(
-                                                item.getProductoRef().productoid().getValue(),
+                                                item.getProductoRef().productoId().getValue(),
                                                 item.getProductoRef().nombreProducto(),
                                                 item.getCantidad(),
                                                 item.getPrecioUnitario().cantidad(),
