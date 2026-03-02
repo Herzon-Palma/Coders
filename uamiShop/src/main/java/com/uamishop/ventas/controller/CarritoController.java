@@ -2,7 +2,7 @@ package com.uamishop.ventas.controller;
 
 import com.uamishop.ApiError;
 import com.uamishop.shared.domain.ClienteId;
-import com.uamishop.shared.domain.ProductoId;
+import com.uamishop.shared.domain.Productoid;
 import com.uamishop.ventas.domain.Carrito;
 import com.uamishop.ventas.domain.CarritoId;
 import com.uamishop.ventas.service.CarritoService;
@@ -71,7 +71,7 @@ public class CarritoController {
                         @Valid @RequestBody CarritoRequest request) {
 
                 Carrito carrito = carritoService.agregarProducto(
-                                id, new ProductoId(request.productoId()), request.cantidad());
+                                id, new Productoid(request.productoId()), request.cantidad());
 
                 return ResponseEntity.ok(mapToResponse(carrito));
         }
@@ -87,7 +87,7 @@ public class CarritoController {
         @PutMapping("/{id}/items/{productoId}")
         public ResponseEntity<CarritoResponse> modificarCantidad(
                         @Parameter(description = "ID del carrito") @PathVariable CarritoId id,
-                        @Parameter(description = "ID del producto a modificar") @PathVariable ProductoId productoId,
+                        @Parameter(description = "ID del producto a modificar") @PathVariable Productoid productoId,
                         @NotNull(message = "La nueva cantidad es obligatoria") @Min(value = 1, message = "La cantidad mínima es 1 (RN-VEN-05)") @Max(value = 10, message = "La cantidad máxima es 10 (RN-VEN-02)") @RequestBody Integer nuevaCantidad) {
 
                 Carrito carrito = carritoService.modificarCantidad(
@@ -106,7 +106,7 @@ public class CarritoController {
         @DeleteMapping("/{id}/items/{productoId}")
         public ResponseEntity<CarritoResponse> eliminarProducto(
                         @Parameter(description = "ID del carrito") @PathVariable CarritoId id,
-                        @Parameter(description = "ID del producto a eliminar") @PathVariable ProductoId productoId) {
+                        @Parameter(description = "ID del producto a eliminar") @PathVariable Productoid productoId) {
 
                 Carrito carrito = carritoService.eliminarProducto(
                                 id, productoId);
@@ -147,7 +147,7 @@ public class CarritoController {
         private CarritoResponse mapToResponse(Carrito c) {
                 var itemsResponse = c.getItems().stream()
                                 .map(item -> new ItemResponse(
-                                                item.getProductoRef().productoId().getValue(),
+                                                item.getProductoRef().productoid().getValue(),
                                                 item.getProductoRef().nombreProducto(),
                                                 item.getCantidad(),
                                                 item.getPrecioUnitario().cantidad(),

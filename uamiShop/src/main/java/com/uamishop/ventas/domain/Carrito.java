@@ -3,8 +3,8 @@ package com.uamishop.ventas.domain;
 import com.uamishop.shared.domain.ClienteId;
 import com.uamishop.shared.domain.Money;
 import com.uamishop.shared.domain.ProductoRef;
-import com.uamishop.shared.domain.ProductoId;
-import com.uamishop.shared.exception.DomainException;
+import com.uamishop.shared.domain.Productoid;
+import com.uamishop.shared.domain.exception.DomainException;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -82,7 +82,7 @@ public class Carrito {
             throw new DomainException("La cantidad debe ser mayor a cero"); // RN-VEN-01
 
         Optional<ItemCarrito> itemExistente = items.stream()
-                .filter(i -> i.getProductoRef().productoId().equals(productoRef.productoId()))
+                .filter(i -> i.getProductoRef().productoid().equals(productoRef.productoid()))
                 .findFirst();
 
         if (itemExistente.isPresent()) {
@@ -101,7 +101,7 @@ public class Carrito {
         actualizarFecha();
     }
 
-    public void modificarCantidad(ProductoId productoId, int nuevaCantidad) {
+    public void modificarCantidad(Productoid productoId, int nuevaCantidad) {
         validarModificable(); // RN-VEN-06
         if (nuevaCantidad <= 0)
             throw new DomainException("La nueva cantidad debe ser mayor a cero"); // RN-VEN-05
@@ -113,7 +113,7 @@ public class Carrito {
         actualizarFecha();
     }
 
-    public void eliminarProducto(ProductoId productoId) {
+    public void eliminarProducto(Productoid productoId) {
         validarModificable(); // RN-VEN-07
         ItemCarrito item = buscarItem(productoId); // Lanza excepción si no existe, cumple RN-VEN-08
         items.remove(item);
@@ -197,9 +197,9 @@ public class Carrito {
         }
     }
 
-    private ItemCarrito buscarItem(ProductoId productoid) {
+    private ItemCarrito buscarItem(Productoid productoid) {
         return items.stream()
-                .filter(i -> i.getProductoRef().productoId().equals(productoid))
+                .filter(i -> i.getProductoRef().productoid().equals(productoid))
                 .findFirst()
                 .orElseThrow(() -> new DomainException("El producto no existe en el carrito"));
     }

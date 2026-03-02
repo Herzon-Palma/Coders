@@ -2,7 +2,7 @@ package com.uamishop.ventas.api;
 
 import com.uamishop.shared.domain.ClienteId;
 import com.uamishop.shared.domain.Money;
-import com.uamishop.shared.domain.ProductoId;
+import com.uamishop.shared.domain.Productoid;
 import com.uamishop.shared.domain.ProductoRef;
 import com.uamishop.ventas.domain.Carrito;
 import com.uamishop.ventas.domain.CarritoId;
@@ -35,7 +35,7 @@ class VentasApiIT {
         Carrito carrito = Carrito.crear(clienteId);
 
         // Agregar un producto para que pueda pasar a checkout
-        ProductoRef producto = new ProductoRef(ProductoId.generar(), "Producto Test", "TES-001");
+        ProductoRef producto = new ProductoRef(Productoid.generar(), "Producto Test", "TES-001");
         carrito.agregarProducto(producto, 1, Money.pesos(100));
 
         carritoRepository.save(carrito);

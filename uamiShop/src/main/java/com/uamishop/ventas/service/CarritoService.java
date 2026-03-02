@@ -2,8 +2,8 @@ package com.uamishop.ventas.service;
 
 import com.uamishop.shared.domain.ClienteId;
 import com.uamishop.shared.domain.Money;
-import com.uamishop.shared.domain.ProductoId;
-import com.uamishop.shared.exception.ResourceNotFoundException;
+import com.uamishop.shared.domain.Productoid;
+import com.uamishop.shared.domain.exception.ResourceNotFoundException;
 import com.uamishop.ventas.api.CarritoResumen;
 import com.uamishop.ventas.api.ItemCarritoResumen;
 import com.uamishop.ventas.api.VentasApi;
@@ -13,7 +13,7 @@ import com.uamishop.shared.domain.ProductoRef;
 import com.uamishop.ventas.repository.CarritoRepository;
 import com.uamishop.catalogo.api.CatalogoApi;
 import com.uamishop.catalogo.api.ProductoResumen;
-import com.uamishop.shared.exception.DomainException;
+import com.uamishop.shared.domain.exception.DomainException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,13 +49,13 @@ public class CarritoService implements VentasApi {
     }
 
     @Transactional
-    public Carrito agregarProducto(CarritoId carritoId, ProductoId productoId, int cantidad) {
+    public Carrito agregarProducto(CarritoId carritoId, Productoid productoId, int cantidad) {
         Carrito carrito = obtenerCarrito(carritoId);
 
         // Buscar el producto en el catálogo (Integración entre módulos via API)
-        ProductoResumen producto = catalogoApi.buscarProducto(productoId.id())
+        ProductoResumen producto = catalogoApi.buscarProducto(productoId.getValue())
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "El producto no existe en el catálogo: " + productoId.id()));
+                        "El producto no existe en el catálogo: " + productoId.getValue()));
 
         if (!producto.disponible()) {
             throw new DomainException("El producto no está disponible para la venta: " + producto.nombre());
@@ -77,7 +77,7 @@ public class CarritoService implements VentasApi {
     }
 
     @Transactional
-    public Carrito modificarCantidad(CarritoId carritoId, ProductoId productoId, int nuevaCantidad) {
+    public Carrito modificarCantidad(CarritoId carritoId, Productoid productoId, int nuevaCantidad) {
         Carrito carrito = obtenerCarrito(carritoId);
 
         // RN-VEN-05 y 06 validados en el dominio
@@ -87,7 +87,7 @@ public class CarritoService implements VentasApi {
     }
 
     @Transactional
-    public Carrito eliminarProducto(CarritoId carritoId, ProductoId productoId) {
+    public Carrito eliminarProducto(CarritoId carritoId, Productoid productoId) {
         Carrito carrito = obtenerCarrito(carritoId);
 
         // RN-VEN-07 y 08 validados en el dominio
@@ -167,7 +167,7 @@ public class CarritoService implements VentasApi {
     private CarritoResumen mapToResumen(Carrito carrito) {
         List<ItemCarritoResumen> items = carrito.getItems().stream()
                 .map(item -> new ItemCarritoResumen(
-                        item.getProductoRef().productoId(),
+                        item.getProductoRef().productoid(),
                         item.getProductoRef().nombreProducto(),
                         item.getProductoRef().sku(),
                         item.getCantidad().intValue(),
