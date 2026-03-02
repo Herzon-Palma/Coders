@@ -1,9 +1,6 @@
 package com.uamishop.ventas.controller;
 
 import com.uamishop.shared.domain.ClienteId;
-import com.uamishop.shared.domain.Money;
-import com.uamishop.shared.domain.Productoid;
-import com.uamishop.ventas.domain.Carrito;
 import com.uamishop.ventas.repository.CarritoRepository;
 import com.uamishop.ventas.controller.dto.CarritoRequest;
 import com.uamishop.ventas.controller.dto.CarritoResponse;
@@ -25,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class CarritoControllerIT {
 
-    private static final String BASE_URL = "/api/v1/carritos";
+    private static final String BASE_URL = "/api/v2/carritos";
 
     @Autowired
     private TestRestTemplate restTemplate;
@@ -39,7 +36,7 @@ class CarritoControllerIT {
     }
 
     @Nested
-    @DisplayName("POST /api/v1/carritos")
+    @DisplayName("POST /api/v2/carritos")
     class CrearCarrito {
 
         @Test
@@ -60,7 +57,7 @@ class CarritoControllerIT {
     }
 
     @Nested
-    @DisplayName("GET /api/v1/carritos/{id}")
+    @DisplayName("GET /api/v2/carritos/{id}")
     class ObtenerCarrito {
 
         @Test
@@ -79,7 +76,7 @@ class CarritoControllerIT {
     }
 
     @Nested
-    @DisplayName("POST /api/v1/carritos/{id}/items")
+    @DisplayName("POST /api/v2/carritos/{id}/items")
     class AgregarProducto {
 
         @Test
