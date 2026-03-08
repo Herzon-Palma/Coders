@@ -12,9 +12,7 @@ import java.util.Optional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+
 
 /* Está clase representa el aggregate root de niestro diagrama 
    de clases del documento de la practica 2*/

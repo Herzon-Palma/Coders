@@ -1,12 +1,17 @@
 package com.uamishop.ordenes.controller;
 
+import com.uamishop.catalogo.domain.*;
+import com.uamishop.catalogo.repository.CategoriaRepository;
+import com.uamishop.catalogo.repository.ProductoRepository;
 import com.uamishop.ordenes.domain.EstadoOrden;
 import com.uamishop.ordenes.domain.Orden;
 import com.uamishop.ordenes.repository.OrdenJpaRepository;
 import com.uamishop.ordenes.service.OrdenService;
 import com.uamishop.shared.domain.DireccionEnvio;
+import com.uamishop.shared.domain.Money;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -36,10 +41,31 @@ class OrdenControllerIT {
         @Autowired
         private OrdenJpaRepository ordenRepository;
 
+        @Autowired
+        private ProductoRepository productoRepository;
+
+        @Autowired
+        private CategoriaRepository categoriaRepository;
+
+        private Producto productoActivo;
+
+        @BeforeEach
+        void setUp() {
+                Categoriaid categoriaId = Categoriaid.generar();
+                categoriaRepository.save(new Categoria(categoriaId, "Electrónicos", "Gadgets"));
+
+                productoActivo = Producto.crear("Producto Test", "Descripción del producto", "PRD-001",
+                                Money.pesos(100), categoriaId);
+                productoActivo.agregarImagen(new Imagen("https://uami.mx/producto.png", "Producto", 1));
+                productoActivo.activar();
+                productoRepository.save(productoActivo);
+        }
+
         @AfterEach
         void cleanUp() {
-                // Al final de cada prueba, limpiamos la base de datos de órdenes
                 ordenRepository.deleteAll();
+                productoRepository.deleteAll();
+                categoriaRepository.deleteAll();
         }
 
         @Nested
@@ -55,11 +81,9 @@ class OrdenControllerIT {
                                         "Juan Perez", "Calle 123", "CDMX", "CDMX", "12345", "México", "5512345678",
                                         "Dejar en recepción");
 
-                        // Generar un UUID que devuelva letras y números para cumplir el SKU (generado
-                        // en OrdenService)
-                        UUID productoId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+                        UUID productoId = productoActivo.getId().getValue();
 
-                        OrdenService.ItemDto item = new OrdenService.ItemDto(productoId, "Producto Test", 2, 100.0);
+                        OrdenService.ItemDto item = new OrdenService.ItemDto(productoId, 2);
 
                         CrearOrdenRequest request = new CrearOrdenRequest(
                                         UUID.randomUUID(),
@@ -114,8 +138,8 @@ class OrdenControllerIT {
                         // Para confirmar una orden, primero necesitamos crear una
                         DireccionEnvio direccion = new DireccionEnvio(
                                         "Ana Torres", "Avenida 456", "MTY", "NL", "54321", "México", "8112345678", "");
-                        UUID productoId = UUID.fromString("987e4567-e89b-12d3-a456-426614174000");
-                        OrdenService.ItemDto item = new OrdenService.ItemDto(productoId, "Teclado Mecanico", 1, 1500.0);
+                        UUID productoId = productoActivo.getId().getValue();
+                        OrdenService.ItemDto item = new OrdenService.ItemDto(productoId, 1);
 
                         CrearOrdenRequest createRequest = new CrearOrdenRequest(UUID.randomUUID(), direccion,
                                         List.of(item));

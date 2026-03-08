@@ -3,6 +3,8 @@ package com.uamishop.ventas.api;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.uamishop.shared.domain.ClienteId;
+
 /**
  * API pública del módulo Ventas.
  * ÚNICO punto de entrada para otros módulos.
@@ -15,4 +17,6 @@ public interface VentasApi {
     void completarCheckout(UUID carritoId);
 
     void abandonarCarrito(UUID carritoId);
+
+    Optional<CarritoResumen> obtenerCarritoParaCheckout(UUID clienteUuid);
 }

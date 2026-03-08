@@ -4,6 +4,8 @@ import com.uamishop.ordenes.domain.exception.ReglaNegocioException;
 import com.uamishop.shared.domain.ClienteId;
 import com.uamishop.shared.domain.DireccionEnvio;
 import com.uamishop.shared.domain.Money;
+import com.uamishop.shared.domain.Productoid;
+import com.uamishop.ventas.api.CarritoResumen;
 import com.uamishop.ordenes.domain.OrdenException;
 import jakarta.persistence.*;
 
@@ -160,6 +162,8 @@ public class Orden {
                 subtotal, descuento, total,
                 EstadoOrden.PENDIENTE, LocalDateTime.now());
     }
+
+    
 
     // ========================================================================
     // TRANSICIONES DE ESTADO
@@ -353,6 +357,7 @@ public class Orden {
     public LocalDateTime getFechaCreacion() {
         return fechaCreacion;
     }
+
 
     // --- Igualdad por identidad ---
 

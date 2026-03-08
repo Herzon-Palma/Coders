@@ -2,6 +2,8 @@ package com.uamishop.ordenes.domain;
 
 import com.uamishop.shared.domain.Money;
 import com.uamishop.shared.domain.ProductoRef;
+import com.uamishop.shared.domain.Productoid;
+
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -87,6 +89,8 @@ public class ItemOrden {
         this.nombreProducto = productoRef.nombreProducto();
         this.subtotal = precioUnitario.multiplicar(cantidad);
     }
+
+    
 
     public Money calcularSubtotal() {
         return subtotal;

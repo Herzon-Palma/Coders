@@ -10,12 +10,17 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import com.uamishop.catalogo.domain.*;
+import com.uamishop.catalogo.repository.CategoriaRepository;
+import com.uamishop.catalogo.repository.ProductoRepository;
+import com.uamishop.shared.domain.Money;
 import com.uamishop.ordenes.repository.OrdenJpaRepository;
 import com.uamishop.ordenes.service.OrdenService;
 import com.uamishop.shared.domain.DireccionEnvio;
@@ -27,14 +32,35 @@ public class OrdenesApiIT {
     private OrdenesApi ordenesApi;
 
     @Autowired
-    private OrdenService ordenService; // Usado solo para crear data de prueba de manera real
+    private OrdenService ordenService;
 
     @Autowired
     private OrdenJpaRepository ordenRepository;
 
+    @Autowired
+    private ProductoRepository productoRepository;
+
+    @Autowired
+    private CategoriaRepository categoriaRepository;
+
+    private Producto productoActivo;
+
+    @BeforeEach
+    void setUp() {
+        Categoriaid categoriaId = Categoriaid.generar();
+        categoriaRepository.save(new Categoria(categoriaId, "Electrónicos", "Gadgets"));
+
+        productoActivo = Producto.crear("Teclado Gamer", "Teclado mecánico RGB", "TEC-001", Money.pesos(800), categoriaId);
+        productoActivo.agregarImagen(new Imagen("https://uami.mx/teclado.png", "Teclado", 1));
+        productoActivo.activar();
+        productoRepository.save(productoActivo);
+    }
+
     @AfterEach
     void cleanUp() {
         ordenRepository.deleteAll();
+        productoRepository.deleteAll();
+        categoriaRepository.deleteAll();
     }
 
     @Nested
@@ -48,8 +74,8 @@ public class OrdenesApiIT {
             UUID clienteId = UUID.randomUUID();
             DireccionEnvio direccion = new DireccionEnvio(
                     "Ana Torres", "Avenida 456", "MTY", "NL", "54321", "México", "8112345678", "");
-            UUID productoId = UUID.randomUUID();
-            OrdenService.ItemDto item = new OrdenService.ItemDto(productoId, "Teclado", 2, 800.0);
+            UUID productoId = productoActivo.getId().getValue();
+            OrdenService.ItemDto item = new OrdenService.ItemDto(productoId, 2);
 
             // Guardamos usando el propio Service para tener una entidad base válida en DB
             var ordenBD = ordenService.crearOrden(clienteId, direccion, List.of(item));
@@ -65,7 +91,7 @@ public class OrdenesApiIT {
             assertEquals(clienteId, resumen.clienteId().getId());
             assertEquals(1, resumen.items().size());
             assertEquals(2, resumen.items().get(0).cantidad());
-            assertEquals("Teclado", resumen.items().get(0).nombreProducto());
+            assertEquals("Teclado Gamer", resumen.items().get(0).nombreProducto());
         }
 
         @Test

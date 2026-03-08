@@ -4,6 +4,7 @@ import com.uamishop.shared.domain.ClienteId;
 import com.uamishop.shared.domain.Money;
 import com.uamishop.shared.domain.Productoid;
 import com.uamishop.shared.domain.exception.ResourceNotFoundException;
+import com.uamishop.shared.event.ProductoAgregadoAlCarritoEvent;
 import com.uamishop.ventas.api.CarritoResumen;
 import com.uamishop.ventas.api.ItemCarritoResumen;
 import com.uamishop.ventas.api.VentasApi;
@@ -14,9 +15,13 @@ import com.uamishop.ventas.repository.CarritoRepository;
 import com.uamishop.catalogo.api.CatalogoApi;
 import com.uamishop.catalogo.api.ProductoResumen;
 import com.uamishop.shared.domain.exception.DomainException;
+
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,10 +33,12 @@ public class CarritoService implements VentasApi {
 
     private final CarritoRepository carritoRepository;
     private final CatalogoApi catalogoApi;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public CarritoService(CarritoRepository carritoRepository, CatalogoApi catalogoApi) {
+    public CarritoService(CarritoRepository carritoRepository, CatalogoApi catalogoApi, ApplicationEventPublisher eventPublisher) {
         this.carritoRepository = carritoRepository;
         this.catalogoApi = catalogoApi;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -65,8 +72,18 @@ public class CarritoService implements VentasApi {
         Money precio = new Money(producto.precio(), producto.moneda());
 
         carrito.agregarProducto(ref, cantidad, precio);
-
-        return carritoRepository.save(carrito);
+        carritoRepository.save(carrito);
+        ProductoAgregadoAlCarritoEvent event = new ProductoAgregadoAlCarritoEvent(
+                UUID.randomUUID(), // eventId
+                Instant.now(), // occurredAt
+                productoId.getValue(),
+                carritoId.id(),
+                cantidad,
+                precio.cantidad(),
+                precio.moneda()
+        );
+        eventPublisher.publishEvent(event);
+        return carrito;
     }
 
     @Transactional
@@ -147,7 +164,9 @@ public class CarritoService implements VentasApi {
     @Override
     @Transactional
     public void completarCheckout(UUID carritoId) {
-        completarCheckout(new CarritoId(carritoId));
+        Carrito carrito = obtenerCarrito(new CarritoId(carritoId));
+        carrito.completarCheckout();
+        carritoRepository.save(carrito);
     }
 
     @Override
@@ -164,6 +183,13 @@ public class CarritoService implements VentasApi {
         abandonar(new CarritoId(carritoId));
     }
 
+    @Override
+    public Optional<CarritoResumen> obtenerCarritoParaCheckout(UUID carritoId) {
+        return carritoRepository.findById(new CarritoId(carritoId))
+                .filter(carrito -> carrito.getEstado() == com.uamishop.ventas.domain.EstadoCarrito.CHECKOUT)
+                .map(this::mapToResumen);
+    }
+
     private CarritoResumen mapToResumen(Carrito carrito) {
         List<ItemCarritoResumen> items = carrito.getItems().stream()
                 .map(item -> new ItemCarritoResumen(
@@ -178,6 +204,7 @@ public class CarritoService implements VentasApi {
                 carrito.getId().id(),
                 carrito.getClienteId(),
                 carrito.getEstado().name(),
-                items);
+                items, 
+                carrito.calcularTotal());
     }
 }

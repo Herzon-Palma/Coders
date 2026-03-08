@@ -5,20 +5,30 @@ import com.uamishop.shared.domain.Money;
 import com.uamishop.shared.domain.Productoid;
 import com.uamishop.shared.domain.ProductoRef;
 import com.uamishop.shared.domain.DireccionEnvio;
+import com.uamishop.shared.event.*;
 import com.uamishop.ordenes.domain.*;
-import com.uamishop.ordenes.domain.OrdenException;
 import com.uamishop.shared.domain.exception.ResourceNotFoundException;
+import com.uamishop.shared.event.ProductoCompradoEvent;
+import com.uamishop.ventas.api.CarritoResumen;
+import com.uamishop.ventas.api.VentasApi;
+import com.uamishop.shared.domain.exception.DomainException;
 import com.uamishop.ordenes.repository.OrdenJpaRepository;
+import com.uamishop.catalogo.api.CatalogoApi;
+import com.uamishop.catalogo.api.ProductoResumen;
+
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.uamishop.ordenes.api.OrdenesApi;
+import com.uamishop.ordenes.controller.OrdenResponse;
 import com.uamishop.ordenes.api.OrdenResumen;
 
 import jakarta.validation.constraints.NotBlank;
@@ -30,18 +40,34 @@ import jakarta.validation.constraints.Positive;
 public class OrdenService implements OrdenesApi {
 
     private final OrdenJpaRepository repository;
+    private final CatalogoApi catalogoApi;
+    private final VentasApi ventasApi;
 
-    public OrdenService(OrdenJpaRepository repository) {
+    private final ApplicationEventPublisher eventPublisher;
+
+    public OrdenService(OrdenJpaRepository repository, CatalogoApi catalogoApi, VentasApi ventasApi, ApplicationEventPublisher eventPublisher) {
         this.repository = repository;
+        this.catalogoApi = catalogoApi;
+        this.ventasApi = ventasApi;
+        this.eventPublisher = eventPublisher;
     }
 
     public Orden crearOrden(UUID clienteUuid, DireccionEnvio direccion, List<ItemDto> itemsDto) {
-        // Convertir DTOs a Entidades de Dominio
+        // Convertir DTOs a Entidades de Dominio, validando contra el catálogo
         List<ItemOrden> items = itemsDto.stream().map(d -> {
-            // Generamos un SKU temporal válido (AAA-000)
-            String sku = "TMP-123";
-            ProductoRef ref = new ProductoRef(new Productoid(d.productoId()), d.nombre(), sku);
-            return new ItemOrden(ref, BigDecimal.valueOf(d.cantidad()), Money.pesos(d.precio()));
+            // Buscar el producto en el catálogo 
+            ProductoResumen producto = catalogoApi.buscarProducto(d.productoId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "El producto no existe en el catálogo: " + d.productoId()));
+
+            if (!producto.disponible()) {
+                throw new DomainException(
+                        "El producto no está disponible para la venta: " + producto.nombre());
+            }
+
+            ProductoRef ref = new ProductoRef(new Productoid(d.productoId()), producto.nombre(), producto.sku());
+            Money precio = new Money(producto.precio(), producto.moneda());
+            return new ItemOrden(ref, BigDecimal.valueOf(d.cantidad()), precio);
         })
                 .collect(Collectors.toList());
 
@@ -50,7 +76,48 @@ public class OrdenService implements OrdenesApi {
                                                                                                // fallar
         // regex
 
-        return repository.save(Orden.crear(new ClienteId(clienteUuid), items, direccion, pagoInicial));
+        Orden orden = repository.save(Orden.crear(new ClienteId(clienteUuid), items, direccion, pagoInicial));
+
+        // Publicar evento de productos comprados
+        ProductoCompradoEvent event = new ProductoCompradoEvent(
+                UUID.randomUUID(),
+                Instant.now(),
+                orden.getId().id(),
+                clienteUuid,
+                items.stream().map(item -> new ProductoCompradoEvent.ProductoComprado(
+                        item.getProductoRef().productoid().getValue(),
+                        item.getProductoRef().sku(),
+                        item.getCantidad().intValue(),
+                        item.getPrecioUnitario().cantidad(),
+                        item.getPrecioUnitario().moneda()
+                )).collect(Collectors.toList()));
+
+        eventPublisher.publishEvent(event);
+
+        return orden;
+    }
+
+    public OrdenResponse crearDesdeCarrito(UUID clienteUuid, DireccionEnvio direccion) {
+        // Buscar el carrito en CHECKOUT del cliente vía API de Ventas
+        CarritoResumen carrito = ventasApi.obtenerCarritoParaCheckout(clienteUuid)
+                .orElseThrow(() -> new ResourceNotFoundException("No se encontró un carrito en CHECKOUT para el cliente: " + clienteUuid));
+
+        // Convertir los items del carrito a ItemDto (productoId es Productoid, extraemos el UUID)
+        List<ItemDto> itemsDto = carrito.items().stream()
+                .map(i -> new ItemDto(i.productoId().getValue(), i.cantidad()))
+                .collect(Collectors.toList());
+
+        // Crear la orden (valida catálogo, guarda y publica evento)
+        Orden ordenCreada = crearOrden(clienteUuid, direccion, itemsDto);
+
+        // Marcar el carrito como completado vía API de Ventas
+        ventasApi.completarCheckout(carrito.carritoId());
+
+        return new OrdenResponse(
+                ordenCreada.getId().id(),
+                ordenCreada.getEstado().name(),
+                ordenCreada.getClienteId().getId(),
+                itemsDto);
     }
 
     public Orden confirmarOrden(UUID ordenId) {
@@ -129,11 +196,9 @@ public class OrdenService implements OrdenesApi {
                 itemsResumen);
     }
 
-    // DTO simple
+    // DTO simple — nombre y precio se obtienen del catálogo
     public record ItemDto(
             @NotNull(message = "El productoId no puede ser nulo") UUID productoId,
-            @NotBlank(message = "El nombre del producto es obligatorio") String nombre,
-            @Positive(message = "La cantidad debe ser mayor a cero") int cantidad,
-            @Positive(message = "El precio debe ser mayor a cero") double precio) {
+            @Positive(message = "La cantidad debe ser mayor a cero") int cantidad) {
     }
 }

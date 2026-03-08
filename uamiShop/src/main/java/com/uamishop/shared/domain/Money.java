@@ -12,6 +12,8 @@ import jakarta.persistence.Column;
 
 @Embeddable
 public record Money(@Column(name = "cantidad") BigDecimal cantidad, @Column(name = "moneda") String moneda) {
+    
+
     public static Money zero() {
         return new Money(BigDecimal.ZERO, "MXN");
     }

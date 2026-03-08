@@ -101,3 +101,6 @@ record CrearOrdenRequest(
         @NotNull(message = "La dirección de envío es obligatoria") @Valid DireccionEnvio direccion,
         @NotEmpty(message = "La orden no puede estar vacía, debe contener al menos 1 ítem") @Valid List<OrdenService.ItemDto> items) {
 }
+
+//DTO para response
+
