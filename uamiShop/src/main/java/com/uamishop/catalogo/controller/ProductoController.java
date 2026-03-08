@@ -2,7 +2,10 @@ package com.uamishop.catalogo.controller;
 
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import com.uamishop.catalogo.service.ProductoService;
+import com.uamishop.catalogo.service.ProductoEstadisticasService;
+import com.uamishop.catalogo.domain.ProductoEstadisticas;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -13,6 +16,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,6 +25,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import com.uamishop.catalogo.controller.dto.ProductoEstadisticasResponse;
 import com.uamishop.catalogo.controller.dto.ProductoResponse;
 import com.uamishop.ApiError;
 import com.uamishop.catalogo.controller.dto.ProductoRequest;
@@ -39,9 +44,12 @@ public class ProductoController {
     // de datos.
 
     private final ProductoService productoService;
+    private final ProductoEstadisticasService estadisticasService;
 
-    public ProductoController(ProductoService productoService) {
+    // Se agregan los servicios de estadisticas
+    public ProductoController(ProductoService productoService, ProductoEstadisticasService estadisticasService) {
         this.productoService = productoService;
+        this.estadisticasService = estadisticasService;
     }
 
     @Operation(summary = "Crear un nuevo producto", description = "Crea un nuevo producto en el catálogo con los datos proporcionados.")
@@ -149,6 +157,50 @@ public class ProductoController {
         productoService.desactivar(id);
         return ResponseEntity.ok().build(); // utilizamos build() para retornar una respuesta sin cuerpo, indicando que
                                             // la operación fue exitosa con el status 200 OK
+    }
+
+    // Endpoints de Estadísticas
+
+    @Operation(summary = "Obtener productos más vendidos", description = "Retorna una lista de productos ordenados por cantidad vendida de forma descendente.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de estadísticas de productos más vendidos", content = @Content(schema = @Schema(implementation = ProductoEstadisticasResponse.class)))
+    })
+    @GetMapping("/mas-vendidos")
+    public ResponseEntity<List<ProductoEstadisticasResponse>> obtenerMasVendidos(
+            @Parameter(description = "Número máximo de productos a retornar", example = "10") @RequestParam(defaultValue = "10") int limit) {
+        List<ProductoEstadisticasResponse> response = estadisticasService.obtenerMasVendidos(limit)
+                .stream()
+                .map(this::mapToEstadisticasResponse)
+                .toList();
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Obtener estadísticas de un producto", description = "Retorna las estadísticas de ventas y actividad de un producto específico.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Estadísticas del producto obtenidas exitosamente", content = @Content(schema = @Schema(implementation = ProductoEstadisticasResponse.class)))
+    })
+    @GetMapping("/{id}/estadisticas")
+    public ResponseEntity<ProductoEstadisticasResponse> obtenerEstadisticas(
+            @Parameter(description = "ID único del producto") @PathVariable UUID id) {
+        ProductoEstadisticas estadisticas = estadisticasService.obtenerEstadisticas(id);
+        return ResponseEntity.ok(mapToEstadisticasResponse(estadisticas));
+    }
+
+    /**
+     * Convierte la entidad ProductoEstadisticas al DTO
+     * ProductoEstadisticasResponse.
+     * Transforma el campo ultimaVentaAt de millis (long) a Instant para el formato
+     * ISO-8601 en JSON.
+     */
+    private ProductoEstadisticasResponse mapToEstadisticasResponse(ProductoEstadisticas estadisticas) {
+        Instant ultimaVenta = estadisticas.getUltimaVentaAt() > 0
+                ? Instant.ofEpochMilli(estadisticas.getUltimaVentaAt())
+                : null;
+        return new ProductoEstadisticasResponse(
+                estadisticas.getVentastotales(),
+                estadisticas.getCantidadVendida(),
+                estadisticas.getVecesAgregadoCarrito(),
+                ultimaVenta);
     }
 
 }
