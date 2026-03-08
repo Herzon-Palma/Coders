@@ -45,7 +45,8 @@ public class OrdenService implements OrdenesApi {
 
     private final ApplicationEventPublisher eventPublisher;
 
-    public OrdenService(OrdenJpaRepository repository, CatalogoApi catalogoApi, VentasApi ventasApi, ApplicationEventPublisher eventPublisher) {
+    public OrdenService(OrdenJpaRepository repository, CatalogoApi catalogoApi, VentasApi ventasApi,
+            ApplicationEventPublisher eventPublisher) {
         this.repository = repository;
         this.catalogoApi = catalogoApi;
         this.ventasApi = ventasApi;
@@ -55,7 +56,7 @@ public class OrdenService implements OrdenesApi {
     public Orden crearOrden(UUID clienteUuid, DireccionEnvio direccion, List<ItemDto> itemsDto) {
         // Convertir DTOs a Entidades de Dominio, validando contra el catálogo
         List<ItemOrden> items = itemsDto.stream().map(d -> {
-            // Buscar el producto en el catálogo 
+            // Buscar el producto en el catálogo
             ProductoResumen producto = catalogoApi.buscarProducto(d.productoId())
                     .orElseThrow(() -> new ResourceNotFoundException(
                             "El producto no existe en el catálogo: " + d.productoId()));
@@ -89,8 +90,7 @@ public class OrdenService implements OrdenesApi {
                         item.getProductoRef().sku(),
                         item.getCantidad().intValue(),
                         item.getPrecioUnitario().cantidad(),
-                        item.getPrecioUnitario().moneda()
-                )).collect(Collectors.toList()));
+                        item.getPrecioUnitario().moneda())).collect(Collectors.toList()));
 
         eventPublisher.publishEvent(event);
 
@@ -100,18 +100,27 @@ public class OrdenService implements OrdenesApi {
     public OrdenResponse crearDesdeCarrito(UUID clienteUuid, DireccionEnvio direccion) {
         // Buscar el carrito en CHECKOUT del cliente vía API de Ventas
         CarritoResumen carrito = ventasApi.obtenerCarritoParaCheckout(clienteUuid)
-                .orElseThrow(() -> new ResourceNotFoundException("No se encontró un carrito en CHECKOUT para el cliente: " + clienteUuid));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "No se encontró un carrito en CHECKOUT para el cliente: " + clienteUuid));
 
-        // Convertir los items del carrito a ItemDto (productoId es Productoid, extraemos el UUID)
+        // Convertir los items del carrito a ItemDto (productoId es Productoid,
+        // extraemos el UUID)
         List<ItemDto> itemsDto = carrito.items().stream()
                 .map(i -> new ItemDto(i.productoId().getValue(), i.cantidad()))
                 .collect(Collectors.toList());
 
-        // Crear la orden (valida catálogo, guarda y publica evento)
+        // Crear la orden (valida catálogo, guarda y publica evento
+        // ProductoCompradoEvent)
         Orden ordenCreada = crearOrden(clienteUuid, direccion, itemsDto);
 
-        // Marcar el carrito como completado vía API de Ventas
-        ventasApi.completarCheckout(carrito.carritoId());
+        // Publicar evento OrdenCreadaEvent para que Ventas complete el checkout de
+        // forma asíncrona
+        eventPublisher.publishEvent(new OrdenCreadaEvent(
+                UUID.randomUUID(),
+                Instant.now(),
+                ordenCreada.getId().id(),
+                carrito.carritoId(),
+                clienteUuid));
 
         return new OrdenResponse(
                 ordenCreada.getId().id(),
