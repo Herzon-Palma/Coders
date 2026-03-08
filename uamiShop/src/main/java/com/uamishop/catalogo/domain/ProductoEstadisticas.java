@@ -31,6 +31,15 @@ public class ProductoEstadisticas {
         this.ultimaAgregadoCarritoAt = 0;
     }
 
+    public ProductoEstadisticas(UUID productoId, int cantidad) {
+        this.productoEId = productoId;
+        this.ventastotales = cantidad;
+        this.cantidadVendida = cantidad;
+        this.vecesAgregadoCarrito = 0;
+        this.ultimaVentaAt = System.currentTimeMillis();
+        this.ultimaAgregadoCarritoAt = 0;
+    }
+
     public UUID getProductoEId() {
         return productoEId;
     }
@@ -79,7 +88,19 @@ public class ProductoEstadisticas {
         this.ultimaAgregadoCarritoAt = ultimaAgregadoCarritoAt;
     }
 
-    
+    public void registrarVenta(int cantidad) {
+        this.ventastotales += cantidad;
+        this.cantidadVendida += cantidad;
+        this.ultimaVentaAt = System.currentTimeMillis();
+    }
+
+    public void registrarAgregadoCarrito(UUID productoId) {
+        this.vecesAgregadoCarrito += 1;
+        this.ultimaAgregadoCarritoAt = System.currentTimeMillis();
+        
+    }
+
+
 
 
 }
