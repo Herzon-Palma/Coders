@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -93,6 +92,12 @@ public class OrdenController {
             @Parameter(description = "Justificación/motivo de cancelación") @RequestBody String motivo) {
         return ResponseEntity.ok(service.cancelarOrden(id, motivo));
     }
+
+    @PostMapping("/desde-carrito")
+    @Operation(summary = "Crear orden desde carrito", description = "Crea una orden a partir del carrito activo del cliente.")
+    public ResponseEntity<OrdenResponse> crearDesdeCarrito(@Valid @RequestBody CrearDesdeCarritoRequest request) {
+        return ResponseEntity.ok(service.crearDesdeCarrito(request.clienteId(), request.direccion()));
+    }
 }
 
 // DTOs
@@ -102,5 +107,9 @@ record CrearOrdenRequest(
         @NotEmpty(message = "La orden no puede estar vacía, debe contener al menos 1 ítem") @Valid List<OrdenService.ItemDto> items) {
 }
 
-//DTO para response
+record CrearDesdeCarritoRequest(
+        @NotNull(message = "El ID del cliente es obligatorio") UUID clienteId,
+        @NotNull(message = "La dirección de envío es obligatoria") @Valid DireccionEnvio direccion) {
+}
 
+// DTO para response
