@@ -20,7 +20,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -35,7 +34,8 @@ public class CarritoService implements VentasApi {
     private final CatalogoApi catalogoApi;
     private final ApplicationEventPublisher eventPublisher;
 
-    public CarritoService(CarritoRepository carritoRepository, CatalogoApi catalogoApi, ApplicationEventPublisher eventPublisher) {
+    public CarritoService(CarritoRepository carritoRepository, CatalogoApi catalogoApi,
+            ApplicationEventPublisher eventPublisher) {
         this.carritoRepository = carritoRepository;
         this.catalogoApi = catalogoApi;
         this.eventPublisher = eventPublisher;
@@ -80,8 +80,7 @@ public class CarritoService implements VentasApi {
                 carritoId.id(),
                 cantidad,
                 precio.cantidad(),
-                precio.moneda()
-        );
+                precio.moneda());
         eventPublisher.publishEvent(event);
         return carrito;
     }
@@ -184,9 +183,9 @@ public class CarritoService implements VentasApi {
     }
 
     @Override
-    public Optional<CarritoResumen> obtenerCarritoParaCheckout(UUID carritoId) {
-        return carritoRepository.findById(new CarritoId(carritoId))
-                .filter(carrito -> carrito.getEstado() == com.uamishop.ventas.domain.EstadoCarrito.CHECKOUT)
+    public Optional<CarritoResumen> obtenerCarritoParaCheckout(UUID clienteUuid) {
+        return carritoRepository.findByClienteIdAndEstado(new ClienteId(clienteUuid),
+                com.uamishop.ventas.domain.EstadoCarrito.CHECKOUT)
                 .map(this::mapToResumen);
     }
 
@@ -204,7 +203,7 @@ public class CarritoService implements VentasApi {
                 carrito.getId().id(),
                 carrito.getClienteId(),
                 carrito.getEstado().name(),
-                items, 
+                items,
                 carrito.calcularTotal());
     }
 }
