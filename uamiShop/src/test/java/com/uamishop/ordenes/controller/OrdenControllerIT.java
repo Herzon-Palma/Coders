@@ -3,12 +3,18 @@ package com.uamishop.ordenes.controller;
 import com.uamishop.catalogo.domain.*;
 import com.uamishop.catalogo.repository.CategoriaRepository;
 import com.uamishop.catalogo.repository.ProductoRepository;
-import com.uamishop.ordenes.domain.EstadoOrden;
-import com.uamishop.ordenes.domain.Orden;
 import com.uamishop.ordenes.repository.OrdenJpaRepository;
 import com.uamishop.ordenes.service.OrdenService;
 import com.uamishop.shared.domain.DireccionEnvio;
 import com.uamishop.shared.domain.Money;
+import com.uamishop.shared.domain.Productoid;
+import com.uamishop.shared.domain.ProductoRef;
+import com.uamishop.shared.domain.ClienteId;
+import com.uamishop.ventas.domain.Carrito;
+import com.uamishop.ventas.domain.EstadoCarrito;
+import com.uamishop.ventas.repository.CarritoRepository;
+import java.util.concurrent.TimeUnit;
+import static org.awaitility.Awaitility.await;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,6 +53,9 @@ class OrdenControllerIT {
         @Autowired
         private CategoriaRepository categoriaRepository;
 
+        @Autowired
+        private CarritoRepository carritoRepository;
+
         private Producto productoActivo;
 
         @BeforeEach
@@ -64,6 +73,7 @@ class OrdenControllerIT {
         @AfterEach
         void cleanUp() {
                 ordenRepository.deleteAll();
+                carritoRepository.deleteAll();
                 productoRepository.deleteAll();
                 categoriaRepository.deleteAll();
         }
@@ -168,6 +178,57 @@ class OrdenControllerIT {
                                         "Error en confirmación: " + confirmResponse.getBody());
                         assertTrue(confirmResponse.getBody().contains("CONFIRMADA"),
                                         "El JSON no contiene CONFIRMADA. Body devuelto: " + confirmResponse.getBody());
+                }
+        }
+
+        @Nested
+        @DisplayName("POST /api/v1/ordenes/desde-carrito")
+        class CrearOrdenDesdeCarrito {
+
+                @Test
+                @DisplayName("Crea orden desde carrito y completa el checkout asíncronamente")
+                void crearOrdenDesdeCarritoTest() {
+                        // 1. Preparar escenario
+                        UUID clienteId = UUID.randomUUID();
+                        DireccionEnvio direccion = new DireccionEnvio(
+                                        "Carlos Ruiz", "Av. Reforma 50", "CDMX", "CDMX", "11000", "México",
+                                        "5598765432",
+                                        "Piso 10");
+
+                        // Crear y guardar un carrito en estado CHECKOUT para el cliente
+                        Carrito carrito = Carrito.crear(new ClienteId(clienteId));
+                        ProductoRef ref = new ProductoRef(new Productoid(productoActivo.getId().getValue()),
+                                        productoActivo.getNombre(), productoActivo.getSku());
+                        carrito.agregarProducto(ref, 1, productoActivo.getPrecio());
+                        carrito.iniciarCheckout();
+                        carrito = carritoRepository.save(carrito);
+                        UUID carritoId = carrito.getId().id();
+
+                        // 2. Ejecutar petición
+                        CrearDesdeCarritoRequest request = new CrearDesdeCarritoRequest(clienteId, direccion);
+                        ResponseEntity<OrdenResponse> response = restTemplate.postForEntity(
+                                        BASE_URL + "/desde-carrito",
+                                        request,
+                                        OrdenResponse.class);
+
+                        // 3. Validaciones inmediatas (Sincrónicas)
+                        assertEquals(HttpStatus.OK, response.getStatusCode());
+                        assertNotNull(response.getBody());
+                        assertEquals("PENDIENTE", response.getBody().estadoOrden());
+
+                        // 4. Validación asíncrona (Eventualmente el carrito debe estar COMPLETADO)
+                        await().atMost(5, TimeUnit.SECONDS).until(() -> {
+                                Carrito c = carritoRepository
+                                                .findById(new com.uamishop.ventas.domain.CarritoId(carritoId))
+                                                .orElse(null);
+                                return c != null && c.getEstado() == EstadoCarrito.COMPLETADO;
+                        });
+
+                        // 5. Verificar que el carrito realmente cambió a COMPLETADO
+                        Carrito carritoFinal = carritoRepository
+                                        .findById(new com.uamishop.ventas.domain.CarritoId(carritoId))
+                                        .orElseThrow();
+                        assertEquals(EstadoCarrito.COMPLETADO, carritoFinal.getEstado());
                 }
         }
 }
