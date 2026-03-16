@@ -1,0 +1,25 @@
+FROM maven:3.9-eclipse-temurin-21 AS builder
+
+WORKDIR /app
+
+COPY pom.xml .
+RUN mvn dependency:go-offline -B
+
+#Copiar código fuente y compilar
+COPY src ./src
+RUN mvn clean package -DskipTests -B
+#Segunda etapa: imagen de ejecución
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+
+#Usuario no root para seguridad
+RUN groupadd -g 1001 appgroup && useradd -u 1001 -g appgroup appuser
+USER appuser
+
+#Copiar el JAR generado desde la etapa de construcción
+COPY --from=builder /app/target/*.jar app.jar
+#Exponer el puerto de la aplicación
+EXPOSE 8080
+
+ENTRYPOINT [ "java", "-jar", "app.jar" ]
+
