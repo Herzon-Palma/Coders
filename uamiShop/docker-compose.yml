@@ -27,7 +27,7 @@ services:
    build:
      context: .
      dockerfile: dockerfile
-   image: uamishop:latest
+   image: valente42/uamishop:v1.0
    container_name: uamishop
    ports:
      - "8080:8080"
