@@ -22,7 +22,6 @@ import java.util.Optional;
 
 
 @Service
-@Profile("catalogo-local")
 public class ProductoService implements CatalogoApi {
     private final ProductoRepository productoRepository;
     private final CategoriaRepository categoriaRepository;

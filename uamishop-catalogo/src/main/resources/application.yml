@@ -1,0 +1,28 @@
+server: 
+  port: 8081 
+spring: 
+  application: 
+    name: uamishop-catalogo 
+  datasource: 
+    url: jdbc:mysql://localhost:3306/uamishop_catalogo?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: uamishop 
+    password: uamishop 
+    driver-class-name: com.mysql.cj.jdbc.Driver 
+  jpa: 
+    hibernate: 
+      ddl-auto: update 
+    show-sql: true 
+    properties: 
+      hibernate: 
+        format_sql: true 
+        default_schema: catalogo 
+  rabbitmq: 
+    host: localhost 
+    port: 5672 
+    username: guest 
+    password: guest 
+springdoc: 
+  api-docs: 
+    path: /api-docs 
+  swagger-ui: 
+    path: /swagger-ui.html 
