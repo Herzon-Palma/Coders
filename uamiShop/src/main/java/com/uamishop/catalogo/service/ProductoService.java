@@ -10,6 +10,8 @@ import com.uamishop.shared.domain.Money;
 import com.uamishop.shared.domain.Productoid;
 
 import com.uamishop.shared.domain.exception.ResourceNotFoundException;
+
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,7 +20,9 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.Optional;
 
+
 @Service
+@Profile("catalogo-local")
 public class ProductoService implements CatalogoApi {
     private final ProductoRepository productoRepository;
     private final CategoriaRepository categoriaRepository;

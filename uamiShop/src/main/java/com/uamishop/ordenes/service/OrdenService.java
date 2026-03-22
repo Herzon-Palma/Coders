@@ -8,14 +8,15 @@ import com.uamishop.shared.domain.DireccionEnvio;
 import com.uamishop.shared.event.*;
 import com.uamishop.ordenes.domain.*;
 import com.uamishop.shared.domain.exception.ResourceNotFoundException;
-import com.uamishop.shared.event.ProductoCompradoEvent;
 import com.uamishop.ventas.api.CarritoResumen;
 import com.uamishop.ventas.api.VentasApi;
 import com.uamishop.shared.domain.exception.DomainException;
 import com.uamishop.ordenes.repository.OrdenJpaRepository;
 import com.uamishop.catalogo.api.CatalogoApi;
 import com.uamishop.catalogo.api.ProductoResumen;
+import com.uamishop.config.RabbitConfig;
 
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,14 +43,17 @@ public class OrdenService implements OrdenesApi {
     private final OrdenJpaRepository repository;
     private final CatalogoApi catalogoApi;
     private final VentasApi ventasApi;
+    
 
     private final ApplicationEventPublisher eventPublisher;
-
+    private final RabbitTemplate rabbitTemplate;
+    
     public OrdenService(OrdenJpaRepository repository, CatalogoApi catalogoApi, VentasApi ventasApi,
-            ApplicationEventPublisher eventPublisher) {
+            ApplicationEventPublisher eventPublisher, RabbitTemplate rabbitTemplate) {
         this.repository = repository;
         this.catalogoApi = catalogoApi;
         this.ventasApi = ventasApi;
+        this.rabbitTemplate = rabbitTemplate;
         this.eventPublisher = eventPublisher;
     }
 
@@ -93,6 +97,11 @@ public class OrdenService implements OrdenesApi {
                         item.getPrecioUnitario().moneda())).collect(Collectors.toList()));
 
         eventPublisher.publishEvent(event);
+        rabbitTemplate.convertAndSend(
+          RabbitConfig.EVENTS_EXCHANGE,
+            RabbitConfig.RK_PRODUCTO_COMPRADO,
+            event  
+        );
 
         return orden;
     }
@@ -121,6 +130,18 @@ public class OrdenService implements OrdenesApi {
                 ordenCreada.getId().id(),
                 carrito.carritoId(),
                 clienteUuid));
+
+        //Ahora para rabbirtMQ
+        rabbitTemplate.convertAndSend(
+            RabbitConfig.EVENTS_EXCHANGE,
+            RabbitConfig.RK_PRODUCTO_COMPRADO,
+            new OrdenCreadaEvent(
+                UUID.randomUUID(),
+                Instant.now(),
+                ordenCreada.getId().id(),
+                carrito.carritoId(),
+                clienteUuid)
+        );
 
         return new OrdenResponse(
                 ordenCreada.getId().id(),
