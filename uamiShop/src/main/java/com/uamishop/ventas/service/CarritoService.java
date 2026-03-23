@@ -16,9 +16,11 @@ import com.uamishop.catalogo.api.CatalogoApi;
 import com.uamishop.catalogo.api.ProductoResumen;
 import com.uamishop.shared.domain.exception.DomainException;
 
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.uamishop.config.RabbitConfig;
 
 import java.time.Instant;
 import java.util.List;
@@ -33,12 +35,14 @@ public class CarritoService implements VentasApi {
     private final CarritoRepository carritoRepository;
     private final CatalogoApi catalogoApi;
     private final ApplicationEventPublisher eventPublisher;
+    private final RabbitTemplate rabbitTemplate;
 
     public CarritoService(CarritoRepository carritoRepository, CatalogoApi catalogoApi,
-            ApplicationEventPublisher eventPublisher) {
+            ApplicationEventPublisher eventPublisher, RabbitTemplate rabbitTemplate) {
         this.carritoRepository = carritoRepository;
         this.catalogoApi = catalogoApi;
         this.eventPublisher = eventPublisher;
+        this.rabbitTemplate = rabbitTemplate;
     }
 
     @Transactional
@@ -81,7 +85,12 @@ public class CarritoService implements VentasApi {
                 cantidad,
                 precio.cantidad(),
                 precio.moneda());
-        eventPublisher.publishEvent(event);
+        eventPublisher.publishEvent(event); // Evento interno (para listeners in-process)
+        rabbitTemplate.convertAndSend( // Publicar evento via RabbitMQ (para el microservicio catálogo)
+            RabbitConfig.EVENTS_EXCHANGE,
+            RabbitConfig.RK_PRODUCTO_AGREGADO,
+            event
+        );
         return carrito;
     }
 
