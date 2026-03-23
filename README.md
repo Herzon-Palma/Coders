@@ -25,3 +25,9 @@ mvn spring-boot:run -Dspring-boot.run.profiles=mysql -Dmaven.test.skip=true
 #Ejecutar desde uamishop-catalogo
 mvn spring-boot:run
 ```
+
+
+Servicio	URL
+Monolito Swagger	http://localhost:8080/swagger-ui.html
+Catálogo Swagger	http://localhost:8081/swagger-ui/index.html
+RabbitMQ Admin	http://localhost:15672 (guest / guest)
