@@ -1,6 +1,7 @@
 package com.uamishop.ventas.listener;
 
-import org.springframework.context.event.EventListener;
+import com.uamishop.ventas.config.RabbitConfig;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -18,7 +19,7 @@ public class OrdenCreadaListener {
         this.carritoService = carritoService;
     }
 
-    @EventListener
+    @RabbitListener(queues = RabbitConfig.QUEUE_VENTAS_ORDEN_CREADA)
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void onOrdenCreada(OrdenCreadaEvent event) {

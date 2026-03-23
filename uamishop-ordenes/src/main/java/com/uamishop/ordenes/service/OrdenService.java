@@ -14,7 +14,7 @@ import com.uamishop.shared.domain.exception.DomainException;
 import com.uamishop.ordenes.repository.OrdenJpaRepository;
 import com.uamishop.catalogo.api.CatalogoApi;
 import com.uamishop.catalogo.api.ProductoResumen;
-import com.uamishop.config.RabbitConfig;
+import com.uamishop.ordenes.config.RabbitConfig;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.context.ApplicationEventPublisher;
@@ -134,7 +134,7 @@ public class OrdenService implements OrdenesApi {
         //Ahora para rabbirtMQ
         rabbitTemplate.convertAndSend(
             RabbitConfig.EVENTS_EXCHANGE,
-            RabbitConfig.RK_PRODUCTO_COMPRADO,
+            RabbitConfig.RK_ORDEN_CREADA,
             new OrdenCreadaEvent(
                 UUID.randomUUID(),
                 Instant.now(),

@@ -1,0 +1,33 @@
+server:
+  port: 8083
+spring:
+  application:
+    name: uamishop-ordenes
+  datasource:
+    url: jdbc:mysql://localhost:3306/uamishop_ordenes?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: uamishop
+    password: uamishop
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+catalogo:
+  service:
+    url: http://localhost:8081
+ventas:
+  service:
+    url: http://localhost:8082
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html

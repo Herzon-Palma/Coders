@@ -16,6 +16,5 @@ RUN groupadd -g 1001 appgroup && useradd -u 1001 -g appgroup -m appuser
 USER appuser
 # Copiar el JAR generado desde el stage de build
 COPY --from=builder /app/target/*.jar app.jar
-#Puerto por defecto de Spring Boot
-EXPOSE 8081
+EXPOSE 8083
 ENTRYPOINT ["java", "-jar", "app.jar"]
