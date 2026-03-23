@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import com.uamishop.catalogo.controller.dto.ProductoEstadisticasResponse;
 import com.uamishop.catalogo.controller.dto.ProductoResponse;
-import com.uamishop.ApiError;
+import com.uamishop.catalogo.ApiError;
 import com.uamishop.catalogo.controller.dto.ProductoRequest;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
