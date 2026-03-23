@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -41,7 +40,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
 @RequestMapping("/api/v1/categorias")
-@Profile("catalogo-local")
 public class CategoriaController {
     private final CategoriaService categoriaService;
 

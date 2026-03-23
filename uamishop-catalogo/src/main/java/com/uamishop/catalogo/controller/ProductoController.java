@@ -20,7 +20,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,7 +35,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 
 @RestController
 @RequestMapping("/api/v1/productos")
-@Profile("catalogo-local")
 public class ProductoController {
     // Aquí irán los endpoints relacionados con productos
     // Ejemplo: GET /api/productos/{id} para obtener detalles de un producto
