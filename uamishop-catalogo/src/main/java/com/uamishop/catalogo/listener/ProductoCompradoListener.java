@@ -1,11 +1,13 @@
 package com.uamishop.catalogo.listener;
 
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.uamishop.catalogo.config.RabbitConfig;
 import com.uamishop.catalogo.service.ProductoEstadisticasService;
 import com.uamishop.shared.event.ProductoCompradoEvent;
 
@@ -19,6 +21,7 @@ public class ProductoCompradoListener {
         this.estadisticasService = estadisticasService;
     }
 
+    @RabbitListener(queues = RabbitConfig.QUEUE_CATALOGO_PRODUCTO_COMPRADO)
     @EventListener
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW) // Asegura que se ejecute en una nueva transacción independiente

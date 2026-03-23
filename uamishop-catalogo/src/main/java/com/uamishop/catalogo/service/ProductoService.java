@@ -3,9 +3,9 @@ package com.uamishop.catalogo.service;
 import com.uamishop.catalogo.domain.*;
 import com.uamishop.catalogo.repository.ProductoRepository;
 import com.uamishop.catalogo.repository.CategoriaRepository;
-import com.uamishop.catalogo.api.CatalogoApi;
-import com.uamishop.catalogo.api.ProductoResumen;
-import com.uamishop.catalogo.controller.dto.*;
+import com.uamishop.catalogo.controller.dto.ProductoResumen;
+import com.uamishop.catalogo.controller.dto.ProductoRequest;
+import com.uamishop.catalogo.controller.dto.ProductoResponse;
 import com.uamishop.shared.domain.Money;
 import com.uamishop.shared.domain.Productoid;
 
@@ -22,7 +22,7 @@ import java.util.Optional;
 
 
 @Service
-public class ProductoService implements CatalogoApi {
+public class ProductoService {
     private final ProductoRepository productoRepository;
     private final CategoriaRepository categoriaRepository;
 
@@ -98,7 +98,7 @@ public class ProductoService implements CatalogoApi {
 
     //Aquí inicia la implementación de nuesta API de catalogo
 
-    @Override
+   
     public Optional<ProductoResumen> buscarProducto(UUID productoId) {
         return productoRepository.findById(new Productoid(productoId))
                 .map(this::toResumen); 
@@ -107,7 +107,7 @@ public class ProductoService implements CatalogoApi {
                 */
     }
     
-    @Override
+   
     public List<ProductoResumen> buscarProductos(List<UUID> productoIds) {
         List<Productoid> ids = productoIds.stream()
                 .map(Productoid::new)
@@ -119,25 +119,25 @@ public class ProductoService implements CatalogoApi {
                 .collect(Collectors.toList());
     }
 
-    @Override
+    
     public boolean existeProducto(UUID productoId) {
         return productoRepository.existsById(new Productoid(productoId));
     }
 
-    @Override
+   
     public boolean estaDisponible(UUID productoId) {
         return productoRepository.findById(new Productoid(productoId))
                 .map(Producto::isDisponible)
                 .orElse(false);
     }
 
-    @Override
+    
     public Optional<Money> obtenerPrecio(UUID productoId) {
         return productoRepository.findById(new Productoid(productoId))
                 .map(Producto::getPrecio);
     }
 
-    @Override
+   
     public boolean existeCategoria(UUID categoriaId) {
         return categoriaRepository.existsById(new Categoriaid(categoriaId));}
 

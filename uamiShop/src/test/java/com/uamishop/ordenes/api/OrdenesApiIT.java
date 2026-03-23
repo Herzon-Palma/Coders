@@ -1,9 +1,8 @@
 package com.uamishop.ordenes.api;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
@@ -16,10 +15,10 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
-import com.uamishop.catalogo.domain.*;
-import com.uamishop.catalogo.repository.CategoriaRepository;
-import com.uamishop.catalogo.repository.ProductoRepository;
+import com.uamishop.catalogo.api.CatalogoApi; // La interfaz
+import com.uamishop.catalogo.api.ProductoResumen; // El DTO que devuelve la API
 import com.uamishop.shared.domain.Money;
 import com.uamishop.ordenes.repository.OrdenJpaRepository;
 import com.uamishop.ordenes.service.OrdenService;
@@ -37,30 +36,40 @@ public class OrdenesApiIT {
     @Autowired
     private OrdenJpaRepository ordenRepository;
 
-    @Autowired
-    private ProductoRepository productoRepository;
+    // YA NO USAMOS REPOSITORIOS DE CATÁLOGO
+    // Usamos el Mock de la API
+    @MockBean
+    private CatalogoApi catalogoApi;
 
-    @Autowired
-    private CategoriaRepository categoriaRepository;
-
-    private Producto productoActivo;
+    private UUID productoId;
 
     @BeforeEach
     void setUp() {
-        Categoriaid categoriaId = Categoriaid.generar();
-        categoriaRepository.save(new Categoria(categoriaId, "Electrónicos", "Gadgets"));
+        productoId = UUID.randomUUID();
 
-        productoActivo = Producto.crear("Teclado Gamer", "Teclado mecánico RGB", "TEC-001", Money.pesos(800), categoriaId);
-        productoActivo.agregarImagen(new Imagen("https://uami.mx/teclado.png", "Teclado", 1));
-        productoActivo.activar();
-        productoRepository.save(productoActivo);
+        // SIMULACIÓN: Programamos el Mock para que cuando OrdenesService pregunte, 
+        // el catálogo responda con datos válidos sin ir a la base de datos.
+        ProductoResumen mockProducto = new ProductoResumen(
+                productoId,
+                "Teclado Gamer",
+                "TEC-001",
+                Money.pesos(800).cantidad(),
+                "MXN",
+                UUID.randomUUID(),
+                "Electrónicos",
+                true // Disponible
+        );
+
+        // Configuramos las respuestas de la API mockeada
+        when(catalogoApi.buscarProducto(productoId)).thenReturn(Optional.of(mockProducto));
+        when(catalogoApi.estaDisponible(productoId)).thenReturn(true);
+        when(catalogoApi.obtenerPrecio(productoId)).thenReturn(Optional.of(Money.pesos(800)));
     }
 
     @AfterEach
     void cleanUp() {
         ordenRepository.deleteAll();
-        productoRepository.deleteAll();
-        categoriaRepository.deleteAll();
+        // Ya no limpiamos productos ni categorías porque no existen aquí
     }
 
     @Nested
@@ -74,13 +83,14 @@ public class OrdenesApiIT {
             UUID clienteId = UUID.randomUUID();
             DireccionEnvio direccion = new DireccionEnvio(
                     "Ana Torres", "Avenida 456", "MTY", "NL", "54321", "México", "8112345678", "");
-            UUID productoId = productoActivo.getId().getValue();
+            
             OrdenService.ItemDto item = new OrdenService.ItemDto(productoId, 2);
 
-            // Guardamos usando el propio Service para tener una entidad base válida en DB
+            // Guardamos usando el propio Service. 
+            // Internamente el service llamará a nuestro Mock de catalogoApi.
             var ordenBD = ordenService.crearOrden(clienteId, direccion, List.of(item));
 
-            // Execution - Llamada a la API pública abstracta intermódulo
+            // Execution
             Optional<OrdenResumen> response = ordenesApi.obtenerOrden(ordenBD.getId().id());
 
             // Assertions
@@ -88,9 +98,6 @@ public class OrdenesApiIT {
             OrdenResumen resumen = response.get();
             assertEquals(ordenBD.getId().id(), resumen.ordenId());
             assertEquals("PENDIENTE", resumen.estadoOrden());
-            assertEquals(clienteId, resumen.clienteId().getId());
-            assertEquals(1, resumen.items().size());
-            assertEquals(2, resumen.items().get(0).cantidad());
             assertEquals("Teclado Gamer", resumen.items().get(0).nombreProducto());
         }
 

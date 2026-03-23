@@ -17,5 +17,5 @@ USER appuser
 # Copiar el JAR generado desde el stage de build
 COPY --from=builder /app/target/*.jar app.jar
 #Puerto por defecto de Spring Boot
-EXPOSE 8080
+EXPOSE 8081
 ENTRYPOINT ["java", "-jar", "app.jar"]

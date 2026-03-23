@@ -1,7 +1,7 @@
 name: uamishop-app
+
 services:
   mysql:
-    # ... (Se queda igual, pero asegúrate de tener el script SQL si usas otra DB)
     image: mysql:latest
     container_name: uamishop-mysql
     environment:
@@ -20,21 +20,20 @@ services:
       retries: 10
       start_period: 15s
 
+  # EL MONOLITO
   uamishop:
     build:
-      context: .
+      context: ./uamiShop  # <-- Ruta a la carpeta del monolito
       dockerfile: Dockerfile
-    image: uamishop:latest
+    image: uamishop-monolito:latest
     container_name: uamishop
     ports:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: mysql
-      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/uamishop?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"   
-      # CORRECCIÓN 1: Usar puerto interno 8080
-      CATALOGO_SERVICE_URL: "http://catalog-service:8080" 
-      # CORRECCIÓN 2: Host de Rabbit
-      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_DATASOURCE_URL: "jdbc:mysql://uamishop-mysql:3306/uamishop?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
+      CATALOGO_SERVICE_URL: "http://catalog-service:8080" # Comunicación interna (puerto del contenedor)
+      SPRING_RABBITMQ_HOST: uamishop-rabbitmq
     depends_on:
       mysql:
         condition: service_healthy
@@ -43,17 +42,22 @@ services:
       rabbitmq:
         condition: service_healthy
 
+  # EL MICROSERVICIO DE CATÁLOGO
   catalog-service:
-    image: uamishop:latest
+    build:
+      context: ./uamishop-catalogo # <-- Ruta a la carpeta del nuevo proyecto
+      dockerfile: Dockerfile
+    image: uamishop-catalogo:latest
     container_name: catalog-service
     ports:
-      - "8081:8080"
+      - "8081:8081" # Acceso externo por 8081, interno 8080
     environment:
       SPRING_PROFILES_ACTIVE: mysql,catalogo-local
-      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/uamishop?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"      
+      # Si creaste la base de datos separada, cambia /uamishop por /uamishop_catalogo
+      SPRING_DATASOURCE_URL: "jdbc:mysql://uamishop-mysql:3306/uamishop?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
+      SPRING_DATASOURCE_USERNAME: uamishop
       SPRING_DATASOURCE_PASSWORD: uamishop
-      # CORRECCIÓN 3: Host de Rabbit
-      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_HOST: uamishop-rabbitmq
     depends_on:
       mysql:
         condition: service_healthy
