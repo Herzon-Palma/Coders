@@ -36,7 +36,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 
 @RestController
 @RequestMapping("/api/v1/productos")
-@Profile("catalogo-local")
 public class ProductoController {
     // Aquí irán los endpoints relacionados con productos
     // Ejemplo: GET /api/productos/{id} para obtener detalles de un producto

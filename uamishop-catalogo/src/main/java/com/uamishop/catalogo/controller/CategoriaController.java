@@ -41,7 +41,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
 @RequestMapping("/api/v1/categorias")
-@Profile("catalogo-local")
 public class CategoriaController {
     private final CategoriaService categoriaService;
 
