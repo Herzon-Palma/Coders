@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UamiShop - Tu Tienda de Confianza</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --surface-color: rgba(30, 41, 59, 0.7);
+            --primary-color: #3b82f6;
+            --primary-hover: #2563eb;
+            --text-main: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --glass-blur: blur(16px);
+            --danger: #ef4444;
+            --success: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.15), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.1), transparent 25%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1, h2, h3 {
+            font-weight: 700;
+        }
+
+        header {
+            width: 100%;
+            padding: 1.5rem 2rem;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: var(--glass-blur);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        main {
+            width: 100%;
+            max-width: 1200px;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            flex: 1;
+        }
+
+        .panel {
+            background: var(--surface-color);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .product-card {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-color);
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.2);
+        }
+
+        .product-title {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-price {
+            color: var(--success);
+            font-weight: 600;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+        }
+        
+        button:disabled {
+            background: var(--text-secondary);
+            cursor: not-allowed;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .checkout-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            margin-top: 1rem;
+        }
+
+        .checkout-btn:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+        }
+
+        #notifications {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            z-index: 50;
+        }
+
+        .toast {
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: var(--glass-blur);
+            border-left: 4px solid var(--primary-color);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .toast.error { border-left-color: var(--danger); }
+        .toast.success { border-left-color: var(--success); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">UamiShop</div>
+        <div id="status">Buscando API...</div>
+    </header>
+
+    <main>
+        <div class="panel">
+            <h2>Catálogo de Productos</h2>
+            <div id="products-container" class="products-grid">
+                <!-- Products injected via JS -->
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Tu Carrito</h2>
+            <div id="cart-id-display" style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">ID Cliente: Generando...</div>
+            <div id="cart-items">
+                <p style="color: var(--text-secondary)">El carrito está vacío</p>
+            </div>
+            <div style="margin-top: 1.5rem; display: flex; justify-content: space-between; font-weight: bold; font-size: 1.2rem;">
+                <span>Total:</span>
+                <span id="cart-total">$0.00 MXN</span>
+            </div>
+            <button class="checkout-btn" id="checkout-btn" disabled onclick="checkout()">Comprar Ahora (Checkout)</button>
+        </div>
+    </main>
+
+    <div id="notifications"></div>
+
+    <script>
+        const API_URL = 'http://localhost:9000/api/v1';
+        let clienteId = crypto.randomUUID();
+        let currentCartId = null;
+        
+        document.getElementById('cart-id-display').innerText = 'ID Cliente: ' + clienteId.substring(0,8) + '...';
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerText = message;
+            document.getElementById('notifications').appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        async function init() {
+            try {
+                // 1. Cargar catálogo
+                const response = await fetch(`${API_URL}/productos`);
+                if(!response.ok) throw new Error("Gateway o Servicio de Catálogo no disponible");
+                const productos = await response.json();
+                
+                const container = document.getElementById('products-container');
+                container.innerHTML = '';
+                
+                productos.forEach(p => {
+                    container.innerHTML += `
+                        <div class="product-card">
+                            <h3 class="product-title">${p.nombre}</h3>
+                            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">SKU: ${p.sku}</p>
+                            <div class="product-price">$${p.precio} ${p.moneda}</div>
+                            <button onclick="addToCart('${p.id}')">Agregar al Carrito</button>
+                        </div>
+                    `;
+                });
+                
+                document.getElementById('status').innerText = '✅ Conectado al Gateway';
+                document.getElementById('status').style.color = 'var(--success)';
+            } catch (e) {
+                console.error(e);
+                document.getElementById('status').innerText = '❌ Backend Offline';
+                document.getElementById('status').style.color = 'var(--danger)';
+                showToast("Error conectando con API Gateway (Revisa que los contenedores y pasarela corran en puerto 9000)", "error");
+            }
+        }
+
+        async function createOrGetCart() {
+            if(!currentCartId) {
+                try {
+                    const response = await fetch(`${API_URL}/carritos`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ clienteId: clienteId })
+                    });
+                    const cart = await response.json();
+                    currentCartId = cart.carritoId;
+                } catch(e) {
+                    showToast("No se pudo crear el carrito", "error");
+                    throw e;
+                }
+            }
+            return currentCartId;
+        }
+
+        async function addToCart(productoId) {
+            try {
+                const cartId = await createOrGetCart();
+                const response = await fetch(`${API_URL}/carritos/${cartId}/items`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productoId: productoId, cantidad: 1 })
+                });
+                
+                if(response.ok) {
+                    showToast("Producto agregado", "success");
+                    loadCart();
+                } else {
+                    const errorJson = await response.json();
+                    showToast(errorJson.message || "Error al agregar producto (Posible Circuit Breaker)", "error");
+                }
+            } catch (e) {
+                showToast("Error de red agregando producto", "error");
+            }
+        }
+
+        async function loadCart() {
+            if(!currentCartId) return;
+            try {
+                const response = await fetch(`${API_URL}/carritos/${currentCartId}`);
+                const cart = await response.json();
+                
+                const container = document.getElementById('cart-items');
+                container.innerHTML = '';
+                
+                if(cart.items && cart.items.length > 0) {
+                    cart.items.forEach(i => {
+                        container.innerHTML += `
+                            <div class="cart-item">
+                                <div>
+                                    <span style="font-weight: 600;">Producto ID:</span> <span style="font-size:0.8rem;color:var(--text-secondary)">${i.productoId.substring(0,8)}...</span>
+                                </div>
+                                <div>x${i.cantidad}</div>
+                            </div>
+                        `;
+                    });
+                    document.getElementById('cart-total').innerText = `$${cart.total.cantidad} ${cart.total.moneda}`;
+                    document.getElementById('checkout-btn').disabled = false;
+                } else {
+                    container.innerHTML = '<p style="color: var(--text-secondary)">El carrito está vacío</p>';
+                    document.getElementById('checkout-btn').disabled = true;
+                }
+            } catch (e) {
+                console.error("Error cargando carrito");
+            }
+        }
+
+        async function checkout() {
+            try {
+                // Hacer checkout en ventas
+                await fetch(`${API_URL}/carritos/${currentCartId}/checkout`, { method: 'POST' });
+                
+                // Crear orden
+                const response = await fetch(`${API_URL}/ordenes/carrito`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        clienteId: clienteId,
+                        direccion: {
+                            calle: "Av Principal 123",
+                            ciudad: "CDMX",
+                            estado: "CDMX",
+                            codigoPostal: "10000",
+                            pais: "Mexico"
+                        }
+                    })
+                });
+                
+                if(response.ok) {
+                    const orden = await response.json();
+                    showToast(`¡Orden creada! ID: ${orden.ordenId.substring(0,8)}...`, "success");
+                    currentCartId = null;
+                    document.getElementById('cart-total').innerText = "$0.00 MXN";
+                    document.getElementById('cart-items').innerHTML = '<p style="color: var(--text-secondary)">El carrito está vacío</p>';
+                    document.getElementById('checkout-btn').disabled = true;
+                } else {
+                    showToast("Error al crear la orden", "error");
+                }
+            } catch (e) {
+                showToast("Error de red en checkout", "error");
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
