@@ -108,6 +108,20 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+   uamishop-gateway:
+    build:
+      context: ./uamishop-gateway
+      dockerfile: Dockerfile
+    image: uamishop-gateway:latest
+    container_name: uamishop-gateway
+    ports:
+      - "9000:9000"
+    depends_on:
+      - uamishop-catalogo
+      - uamishop-ordenes
+      - uamishop-ventas
+    restart: unless-stopped
+
   rabbitmq:
     image: rabbitmq:3-management
     container_name: uamishop-rabbitmq
