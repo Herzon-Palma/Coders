@@ -47,6 +47,12 @@ public class GlobalExceptionHandler {
                 .body(new ApiError(400, e.getMessage()));
     }
 
+    @ExceptionHandler(com.uamishop.shared.domain.exception.ServiceUnavailableException.class)
+    public ResponseEntity<ApiError> handleServiceUnavailable(com.uamishop.shared.domain.exception.ServiceUnavailableException e) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(new ApiError(503, e.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleGeneral(Exception e) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
