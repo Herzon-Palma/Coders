@@ -15,8 +15,8 @@ import com.uamishop.ordenes.repository.OrdenJpaRepository;
 import com.uamishop.catalogo.api.CatalogoApi;
 import com.uamishop.catalogo.api.ProductoResumen;
 import com.uamishop.ordenes.config.RabbitConfig;
+import com.uamishop.ordenes.infraestructura.outbox.OutboxService;
 
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,15 +46,15 @@ public class OrdenService implements OrdenesApi {
     
 
     private final ApplicationEventPublisher eventPublisher;
-    private final RabbitTemplate rabbitTemplate;
+    private final OutboxService outboxService;
     
     public OrdenService(OrdenJpaRepository repository, CatalogoApi catalogoApi, VentasApi ventasApi,
-            ApplicationEventPublisher eventPublisher, RabbitTemplate rabbitTemplate) {
+            ApplicationEventPublisher eventPublisher, OutboxService outboxService) {
         this.repository = repository;
         this.catalogoApi = catalogoApi;
         this.ventasApi = ventasApi;
-        this.rabbitTemplate = rabbitTemplate;
         this.eventPublisher = eventPublisher;
+        this.outboxService = outboxService;
     }
 
     public Orden crearOrden(UUID clienteUuid, DireccionEnvio direccion, List<ItemDto> itemsDto) {
@@ -97,10 +97,14 @@ public class OrdenService implements OrdenesApi {
                         item.getPrecioUnitario().moneda())).collect(Collectors.toList()));
 
         eventPublisher.publishEvent(event);
-        rabbitTemplate.convertAndSend(
-          RabbitConfig.EVENTS_EXCHANGE,
+        
+        outboxService.append(
+            "Orden",
+            orden.getId().id(),
+            "ProductoComprado",
+            RabbitConfig.EVENTS_EXCHANGE,
             RabbitConfig.RK_PRODUCTO_COMPRADO,
-            event  
+            event
         );
 
         return orden;
@@ -131,8 +135,11 @@ public class OrdenService implements OrdenesApi {
                 carrito.carritoId(),
                 clienteUuid));
 
-        //Ahora para rabbirtMQ
-        rabbitTemplate.convertAndSend(
+        //Ahora para outbox
+        outboxService.append(
+            "Orden",
+            ordenCreada.getId().id(),
+            "OrdenCreada",
             RabbitConfig.EVENTS_EXCHANGE,
             RabbitConfig.RK_ORDEN_CREADA,
             new OrdenCreadaEvent(
@@ -232,3 +239,4 @@ public class OrdenService implements OrdenesApi {
             @Positive(message = "La cantidad debe ser mayor a cero") int cantidad) {
     }
 }
+
