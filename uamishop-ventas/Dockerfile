@@ -15,7 +15,7 @@ WORKDIR /app
 RUN groupadd -g 1001 appgroup && useradd -u 1001 -g appgroup -m appuser
 USER appuser
 # Copiar el JAR generado desde el stage de build
-COPY --from=builder /app/target/*.jar app.jar
+COPY --from=builder /app/target/uamishop-ventas-0.0.1-SNAPSHOT.jar app.jar
 #Puerto por defecto de Spring Boot
-EXPOSE 8080
+EXPOSE 8083
 ENTRYPOINT ["java", "-jar", "app.jar"]

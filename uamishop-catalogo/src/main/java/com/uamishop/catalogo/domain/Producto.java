@@ -10,20 +10,19 @@ import jakarta.persistence.*;
 import com.uamishop.catalogo.controller.dto.ProductoResponse;
 import com.uamishop.shared.domain.exception.DomainException;
 
-
 @Entity
 @Table(name = "productos")
 public class Producto {
     private static final Pattern PATRON_SKU = Pattern.compile("^[A-Z]{3}-\\d{3}$");
 
-    //Necesitamos un ID para cada producto, lo generaremos automáticamente
+    // Necesitamos un ID para cada producto, lo generaremos automáticamente
     @EmbeddedId
     private Productoid id;
 
     private String nombre;
     private String descripcion;
     private String sku;
-    
+
     @Embedded
     private Money precio;
 
@@ -38,11 +37,13 @@ public class Producto {
     private boolean disponible;
 
     private Producto() {
-        // Esto lo ocupa JPA, no lo usaremos directamentte, y es necesario para evitar error de final en categoriaId
+        // Esto lo ocupa JPA, no lo usaremos directamentte, y es necesario para evitar
+        // error de final en categoriaId
         this.categoriaId = null; // Necesario para evitar error de final
     }
 
-    public Producto(Productoid id, String nombre, String descripcion, String sku, Money precio, Categoriaid categoriaId) {
+    public Producto(Productoid id, String nombre, String descripcion, String sku, Money precio,
+            Categoriaid categoriaId) {
         this.id = id;
         this.nombre = nombre;
         this.descripcion = descripcion;
@@ -54,7 +55,7 @@ public class Producto {
     }
 
     public static Producto crear(String nombre, String descripcion, String sku, Money precio, Categoriaid categoriaId) {
-        if (nombre == null || nombre.length() < 3 || nombre.length() > 100) 
+        if (nombre == null || nombre.length() < 3 || nombre.length() > 100)
             throw new DomainException("Nombre inválido");
         if (precio.cantidad().compareTo(java.math.BigDecimal.ZERO) <= 0)
             throw new DomainException("Precio debe ser mayor a cero");
@@ -69,7 +70,7 @@ public class Producto {
     public void cambiarPrecio(Money nuevoPrecio) {
         if (nuevoPrecio.cantidad().compareTo(java.math.BigDecimal.ZERO) < 0)
             throw new DomainException("Precio no puede ser negativo");
-        
+
         java.math.BigDecimal limite = precio.cantidad().multiply(java.math.BigDecimal.valueOf(1.5));
         if (nuevoPrecio.cantidad().compareTo(limite) > 0)
             throw new DomainException("El incremento no puede superar el 50%");
@@ -78,13 +79,15 @@ public class Producto {
     }
 
     public void agregarImagen(Imagen imagen) {
-        if (this.imagenes.size() >= 5) throw new DomainException("Máximo 5 imágenes");
+        if (this.imagenes.size() >= 5)
+            throw new DomainException("Máximo 5 imágenes");
         this.imagenes.add(imagen);
     }
 
     public void activar() {
-        if (imagenes.isEmpty()) throw new DomainException("Debe tener al menos una imagen");
-        if (precio.cantidad().compareTo(java.math.BigDecimal.ZERO) <= 0) 
+        if (imagenes.isEmpty())
+            throw new DomainException("Debe tener al menos una imagen");
+        if (precio.cantidad().compareTo(java.math.BigDecimal.ZERO) <= 0)
             throw new DomainException("Precio debe ser mayor a cero");
         this.disponible = true;
     }
@@ -98,7 +101,7 @@ public class Producto {
     }
 
     public void actualizarInformacion(String nombre, String descripcion) {
-        if (nombre == null || nombre.length() < 3 || nombre.length() > 100) 
+        if (nombre == null || nombre.length() < 3 || nombre.length() > 100)
             throw new DomainException("Nombre inválido");
         if (descripcion != null && descripcion.length() > 500)
             throw new DomainException("Descripción demasiado larga");
@@ -109,15 +112,14 @@ public class Producto {
 
     public ProductoResponse toResponse() {
         return new ProductoResponse(
-            this.id.valor(),
-            this.nombre,
-            this.descripcion,
-            this.sku,
-            this.precio.cantidad(),
-            this.precio.moneda(),
-            this.categoriaId.valor(),
-            this.disponible
-        );
+                this.id.valor(),
+                this.nombre,
+                this.descripcion,
+                this.sku,
+                this.precio.cantidad(),
+                this.precio.moneda(),
+                this.categoriaId.valor(),
+                this.disponible);
     }
 
     public void actualizar(String nombre, String descripcion, Money precio) {
@@ -126,14 +128,36 @@ public class Producto {
     }
 
     // Getters necesarios para JPA y pruebas
-    public Productoid getId() { return id; }
-    public String getNombre() { return nombre; }
-    public String getDescripcion() { return descripcion; }
-    public Money getPrecio() { return precio; }
-    public String getSku() { return sku; }
-    public Categoriaid getCategoriaId() { return categoriaId; }
-    public List<Imagen> getImagenes() { return imagenes; }
-    public boolean isDisponible() { return disponible; }
+    public Productoid getId() {
+        return id;
+    }
 
+    public String getNombre() {
+        return nombre;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public Money getPrecio() {
+        return precio;
+    }
+
+    public String getSku() {
+        return sku;
+    }
+
+    public Categoriaid getCategoriaId() {
+        return categoriaId;
+    }
+
+    public List<Imagen> getImagenes() {
+        return imagenes;
+    }
+
+    public boolean isDisponible() {
+        return disponible;
+    }
 
 }

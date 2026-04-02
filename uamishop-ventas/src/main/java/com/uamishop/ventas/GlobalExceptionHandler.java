@@ -1,5 +1,4 @@
-package com.uamishop;
-
+package com.uamishop.ventas;
 
 import com.uamishop.shared.domain.exception.DomainException;
 import com.uamishop.shared.domain.exception.ResourceNotFoundException;
@@ -10,11 +9,14 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+/**
+ * Manejador global de excepciones para el microservicio de catálogo.
+ * Cada microservicio define el suyo propio — no depende del del monolito.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     // ── 404 Not Found ─────────────────────────────────────
-    // Recurso no encontrado (producto, carrito, orden, categoría)
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiError> handleNotFound(ResourceNotFoundException e) {
         return ResponseEntity
@@ -22,12 +24,7 @@ public class GlobalExceptionHandler {
                 .body(new ApiError(404, e.getMessage()));
     }
 
-
-
-
-
     // ── 400 Bad Request ───────────────────────────────────
-    // Datos de entrada inválidos
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiError> handleIllegalArgument(IllegalArgumentException e) {
         return ResponseEntity
@@ -47,8 +44,7 @@ public class GlobalExceptionHandler {
                 .body(new ApiError(400, mensaje));
     }
 
-    // DomainException genérica (las que no son ResourceNotFoundException ni
-    // ReglaNegocio)
+    // DomainException genérica
     @ExceptionHandler(DomainException.class)
     public ResponseEntity<ApiError> handleDomainException(DomainException e) {
         return ResponseEntity
@@ -57,7 +53,6 @@ public class GlobalExceptionHandler {
     }
 
     // ── 500 Internal Server Error ─────────────────────────
-    // Cualquier otra excepción no prevista
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleGeneral(Exception e) {
         return ResponseEntity

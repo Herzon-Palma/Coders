@@ -1,7 +1,7 @@
 package com.uamishop.config;
 
 import com.uamishop.shared.domain.Productoid;
-import com.uamishop.ventas.domain.CarritoId;
+
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.format.FormatterRegistry;
@@ -18,16 +18,11 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addFormatters(FormatterRegistry registry) {
-        registry.addConverter(new StringToCarritoIdConverter());
+
         registry.addConverter(new StringToProductoidConverter());
     }
 
-    private static class StringToCarritoIdConverter implements Converter<String, CarritoId> {
-        @Override
-        public CarritoId convert(String source) {
-            return new CarritoId(UUID.fromString(source));
-        }
-    }
+
 
     private static class StringToProductoidConverter implements Converter<String, Productoid> {
         @Override

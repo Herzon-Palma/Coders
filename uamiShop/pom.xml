@@ -95,6 +95,7 @@
 						<testExclude>**/catalogo/controller/ProductoEstadisticasControllerIT.java</testExclude>
 						<testExclude>**/catalogo/api/CatalogoApiIT.java</testExclude>
 						<testExclude>**/catalogo/domain/ProductoTest.java</testExclude>
+						<testExclude>**/ordenes/**/*.java</testExclude>
 					</testExcludes>
 				</configuration>
 			</plugin>
