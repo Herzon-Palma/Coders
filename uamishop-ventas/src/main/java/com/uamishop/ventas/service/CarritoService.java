@@ -36,13 +36,16 @@ public class CarritoService {
     private final CatalogoClient catalogoApi;
     private final ApplicationEventPublisher eventPublisher;
     private final RabbitTemplate rabbitTemplate;
+    private final OutboxService outboxService;  
+
 
     public CarritoService(CarritoRepository carritoRepository, CatalogoClient catalogoApi,
-            ApplicationEventPublisher eventPublisher, RabbitTemplate rabbitTemplate) {
+            ApplicationEventPublisher eventPublisher, RabbitTemplate rabbitTemplate, OutboxService outboxService) {
         this.carritoRepository = carritoRepository;
         this.catalogoApi = catalogoApi;
         this.eventPublisher = eventPublisher;
         this.rabbitTemplate = rabbitTemplate;
+        this.outboxService = outboxService;
     }
 
     @Transactional
@@ -86,11 +89,7 @@ public class CarritoService {
                 precio.cantidad(),
                 precio.moneda());
         eventPublisher.publishEvent(event); // Evento interno (para listeners in-process)
-        rabbitTemplate.convertAndSend( // Publicar evento via RabbitMQ (para el microservicio catálogo)
-            RabbitConfig.EXCHANGE,
-            RabbitConfig.RK_PRODUCTO_AGREGADO,
-            event
-        );
+        outboxService.appendEvent("CARRITO", carritoId.id(), RabbitConfig.EXCHANGE, RabbitConfig.RK_PRODUCTO_AGREGADO, event); // Evento para outbox
         return carrito;
     }
 

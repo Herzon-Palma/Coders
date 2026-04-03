@@ -12,6 +12,8 @@ import com.uamishop.ordenes.client.dto.CarritoResumen;
 import com.uamishop.ordenes.client.VentasClient;
 import com.uamishop.shared.domain.exception.DomainException;
 import com.uamishop.ordenes.repository.OrdenJpaRepository;
+import com.uamishop.ordenes.repository.OutboxRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uamishop.ordenes.client.CatalogoClient;
 import com.uamishop.ordenes.client.dto.ProductoResumen;
 import com.uamishop.ordenes.config.RabbitConfig;
@@ -34,6 +36,10 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
+
+
+
+
 @Service
 @Transactional
 public class OrdenService {
@@ -41,18 +47,23 @@ public class OrdenService {
     private final OrdenJpaRepository repository;
     private final CatalogoClient catalogoApi;
     private final VentasClient ventasApi;
+
+    
+    private final OutboxService outboxService; 
+
     
 
     private final ApplicationEventPublisher eventPublisher;
     private final RabbitTemplate rabbitTemplate;
     
     public OrdenService(OrdenJpaRepository repository, CatalogoClient catalogoApi, VentasClient ventasApi,
-            ApplicationEventPublisher eventPublisher, RabbitTemplate rabbitTemplate) {
+            ApplicationEventPublisher eventPublisher, RabbitTemplate rabbitTemplate, OutboxService outboxService) {
         this.repository = repository;
         this.catalogoApi = catalogoApi;
         this.ventasApi = ventasApi;
-        this.rabbitTemplate = rabbitTemplate;
         this.eventPublisher = eventPublisher;
+        this.rabbitTemplate = rabbitTemplate;
+        this.outboxService = outboxService;
     }
 
     public Orden crearOrden(UUID clienteUuid, DireccionEnvio direccion, List<ItemDto> itemsDto) {
@@ -95,11 +106,13 @@ public class OrdenService {
                         item.getPrecioUnitario().moneda())).collect(Collectors.toList()));
 
         eventPublisher.publishEvent(event);
-        rabbitTemplate.convertAndSend(
+        outboxService.appendEvent("ORDEN", orden.getId().id(), "exchange", "routingKey", event);
+        /*rabbitTemplate.convertAndSend(
           RabbitConfig.EXCHANGE,
             RabbitConfig.RK_PRODUCTO_COMPRADO,
             event  
-        );
+        );*/
+        
 
         return orden;
     }
@@ -122,15 +135,17 @@ public class OrdenService {
 
         // Publicar evento OrdenCreadaEvent para que Ventas complete el checkout de
         // forma asíncrona
-        eventPublisher.publishEvent(new OrdenCreadaEvent(
+        OrdenCreadaEvent ordenCreadaEvent = new OrdenCreadaEvent(
                 UUID.randomUUID(),
                 Instant.now(),
                 ordenCreada.getId().id(),
                 carrito.carritoId(),
-                clienteUuid));
+                clienteUuid);
+        
+        eventPublisher.publishEvent(ordenCreadaEvent);
 
         //Ahora para rabbirtMQ
-        rabbitTemplate.convertAndSend(
+        /*rabbitTemplate.convertAndSend(
             RabbitConfig.EXCHANGE,
             RabbitConfig.RK_PRODUCTO_COMPRADO,
             new OrdenCreadaEvent(
@@ -139,7 +154,11 @@ public class OrdenService {
                 ordenCreada.getId().id(),
                 carrito.carritoId(),
                 clienteUuid)
-        );
+        );*/
+
+        outboxService.appendEvent("ORDEN", ordenCreada.getId().id(), "exchange", "routingKey", ordenCreadaEvent);
+
+        
 
         return new OrdenResponse(
                 ordenCreada.getId().id(),
@@ -190,7 +209,6 @@ public class OrdenService {
         return repository.findById(new OrdenId(id))
                 .orElseThrow(() -> new ResourceNotFoundException("Orden no encontrada"));
     }
-
 
 
     // DTO simple — nombre y precio se obtienen del catálogo
