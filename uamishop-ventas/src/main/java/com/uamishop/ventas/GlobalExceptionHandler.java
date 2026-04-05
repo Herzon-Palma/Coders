@@ -2,6 +2,7 @@ package com.uamishop.ventas;
 
 import com.uamishop.shared.domain.exception.DomainException;
 import com.uamishop.shared.domain.exception.ResourceNotFoundException;
+import com.uamishop.shared.domain.exception.ServiceUnavailableException;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -50,6 +51,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(new ApiError(400, e.getMessage()));
+    }
+
+    // ── 503 Service Unavailable ───────────────────────────
+    @ExceptionHandler(ServiceUnavailableException.class)
+    public ResponseEntity<ApiError> handleServiceUnavailable(ServiceUnavailableException e) {
+        return ResponseEntity
+                .status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(new ApiError(503, e.getMessage()));
     }
 
     // ── 500 Internal Server Error ─────────────────────────
