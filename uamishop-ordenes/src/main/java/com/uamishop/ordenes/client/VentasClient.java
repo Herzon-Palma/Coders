@@ -1,6 +1,8 @@
 package com.uamishop.ordenes.client;
 
 import com.uamishop.ordenes.client.dto.CarritoResumen;
+import com.uamishop.shared.domain.exception.ServiceUnavailableException;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -18,6 +20,7 @@ public class VentasClient {
         this.baseUrl = baseUrl;
     }
 
+    @CircuitBreaker(name = "ventasService", fallbackMethod = "fallbackObtenerCarrito")
     public Optional<CarritoResumen> obtenerCarritoParaCheckout(UUID clienteUuid) {
         try {
             CarritoResumen carrito = restTemplate.getForObject(
@@ -26,7 +29,13 @@ public class VentasClient {
             );
             return Optional.ofNullable(carrito);
         } catch (Exception e) {
-            return Optional.empty();
+            System.err.println("Error calling ventas: " + e.getMessage());
+            throw e;
         }
+    }
+
+    public Optional<CarritoResumen> fallbackObtenerCarrito(UUID clienteUuid, Throwable t) {
+        System.err.println("[ordenes] Fallback ventas: " + t.getMessage());
+        throw new ServiceUnavailableException("Servicio de ventas no disponible temporalmente");
     }
 }

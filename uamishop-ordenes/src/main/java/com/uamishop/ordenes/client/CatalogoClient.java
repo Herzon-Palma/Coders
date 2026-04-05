@@ -1,6 +1,8 @@
 package com.uamishop.ordenes.client;
 
 import com.uamishop.ordenes.client.dto.ProductoResumen;
+import com.uamishop.shared.domain.exception.ServiceUnavailableException;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -18,6 +20,7 @@ public class CatalogoClient {
         this.baseUrl = baseUrl;
     }
 
+    @CircuitBreaker(name = "catalogoService", fallbackMethod = "fallbackBuscarProducto")
     public Optional<ProductoResumen> buscarProducto(UUID productoId) {
         try {
             ProductoResumen producto = restTemplate.getForObject(
@@ -26,7 +29,13 @@ public class CatalogoClient {
             );
             return Optional.ofNullable(producto);
         } catch (Exception e) {
-            return Optional.empty();
+            System.err.println("Error calling catalogo: " + e.getMessage());
+            throw e;
         }
+    }
+
+    public Optional<ProductoResumen> fallbackBuscarProducto(UUID productoId, Throwable t) {
+        System.err.println("[ordenes] Fallback catalogo: " + t.getMessage());
+        throw new ServiceUnavailableException("Servicio de catálogo no disponible temporalmente");
     }
 }
