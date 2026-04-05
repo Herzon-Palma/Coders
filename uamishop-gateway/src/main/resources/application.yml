@@ -1,0 +1,92 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: uamishop-gateway
+  cloud:
+    gateway:
+      # ── Rutas hacia los microservicios ──────────────────────────
+      routes:
+        # Catálogo  →  /catalogo/** → http://localhost:8081/**
+        - id: catalogo-service
+          uri: ${CATALOGO_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/catalogo/**
+          filters:
+            - StripPrefix=1
+            - name: CircuitBreaker
+              args:
+                name: catalogoCB
+                fallbackUri: forward:/fallback/catalogo
+
+        # Órdenes  →  /ordenes/** → http://localhost:8082/**
+        - id: ordenes-service
+          uri: ${ORDENES_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/ordenes/**
+          filters:
+            - StripPrefix=1
+            - name: CircuitBreaker
+              args:
+                name: ordenesCB
+                fallbackUri: forward:/fallback/ordenes
+
+        # Ventas  →  /ventas/** → http://localhost:8083/**
+        - id: ventas-service
+          uri: ${VENTAS_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/ventas/**
+          filters:
+            - StripPrefix=1
+            - name: CircuitBreaker
+              args:
+                name: ventasCB
+                fallbackUri: forward:/fallback/ventas
+
+      # Configuración global por defecto
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+
+# ── Resilience4j Circuit Breaker ──────────────────────────────
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state:
+          seconds: 10
+        permitted-number-of-calls-in-half-open-state: 3
+        slow-call-duration-threshold:
+          seconds: 3
+        slow-call-rate-threshold: 80
+    instances:
+      catalogoCB:
+        base-config: default
+      ordenesCB:
+        base-config: default
+      ventasCB:
+        base-config: default
+  timelimiter:
+    configs:
+      default:
+        timeout-duration:
+          seconds: 5
+
+# Actuator – health check
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    gateway:
+      enabled: true
+
+# Logging
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO
+    io.github.resilience4j: INFO
+    reactor.netty.http.client: INFO

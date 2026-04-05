@@ -35,3 +35,14 @@ catalogo:
 ordenes:
   service:
     url: "http://localhost:8082"
+
+# ── Resilience4j Circuit Breaker ──
+resilience4j:
+  circuitbreaker:
+    instances:
+      catalogoService:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state:
+          seconds: 10
+        permitted-number-of-calls-in-half-open-state: 3
