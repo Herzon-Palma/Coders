@@ -13,7 +13,7 @@ import com.uamishop.ventas.domain.OutboxEvent;
 import com.uamishop.ventas.domain.OutboxStatus;
 
 public interface OutboxEventRepository extends JpaRepository<OutboxEvent, UUID> {
-    @Query("SELECT e FROM OutboxEvent e WHERE e.status IN ('PENDING', 'FAILED') " +
-           "AND e.nextAttemptAt <= :now ORDER BY e.occurredAt ASC")
+    @Query("SELECT e FROM OutboxEvent e WHERE e.status IN (com.uamishop.ventas.domain.OutboxStatus.PENDIENTE, com.uamishop.ventas.domain.OutboxStatus.ERROR) " +
+           "AND e.nextAttemptAt <= :now ORDER BY e.createdAt ASC")
     List<OutboxEvent> findPendingToPublish(@Param("now") Instant now, Pageable pageable);
 }
