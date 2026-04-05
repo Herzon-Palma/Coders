@@ -106,7 +106,7 @@ public class OrdenService {
                         item.getPrecioUnitario().moneda())).collect(Collectors.toList()));
 
         eventPublisher.publishEvent(event);
-        outboxService.appendEvent("ORDEN", orden.getId().id(), "exchange", "routingKey", event);
+        outboxService.appendEvent("ORDEN", orden.getId().id(), RabbitConfig.EXCHANGE, RabbitConfig.RK_PRODUCTO_COMPRADO, event);
         /*rabbitTemplate.convertAndSend(
           RabbitConfig.EXCHANGE,
             RabbitConfig.RK_PRODUCTO_COMPRADO,
@@ -156,7 +156,7 @@ public class OrdenService {
                 clienteUuid)
         );*/
 
-        outboxService.appendEvent("ORDEN", ordenCreada.getId().id(), "exchange", "routingKey", ordenCreadaEvent);
+        outboxService.appendEvent("ORDEN", ordenCreada.getId().id(), RabbitConfig.EXCHANGE, "orden.creada", ordenCreadaEvent);
 
         
 
