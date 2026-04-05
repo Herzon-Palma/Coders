@@ -7,6 +7,9 @@ import java.io.Serializable;
 @Embeddable
 public record Productoid(UUID valor) implements Serializable {
     
+    public Productoid(String id) {
+        this(UUID.fromString(id));
+    }
 
     public static Productoid generar() {
         return new Productoid(UUID.randomUUID());

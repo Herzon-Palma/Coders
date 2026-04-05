@@ -7,6 +7,10 @@ import jakarta.persistence.Embeddable;
 
 @Embeddable
 public record CarritoId(UUID id) implements Serializable {
+    public CarritoId(String id) {
+        this(UUID.fromString(id));
+    }
+
     public static CarritoId generar() {
         return new CarritoId(UUID.randomUUID());
     }

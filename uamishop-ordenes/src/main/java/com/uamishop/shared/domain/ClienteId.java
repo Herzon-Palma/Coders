@@ -20,6 +20,7 @@ public class ClienteId implements Serializable {
     
     public UUID getValue() { return id; }
 
+    @com.fasterxml.jackson.annotation.JsonCreator
     public static ClienteId of(String id) {
         return new ClienteId(UUID.fromString(id));
     }
@@ -39,6 +40,7 @@ public class ClienteId implements Serializable {
     @Override
     public int hashCode() { return id.hashCode(); }
 
-    //Getter
+    //Getter & Setter
     public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
 }

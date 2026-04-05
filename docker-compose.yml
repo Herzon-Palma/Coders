@@ -125,5 +125,19 @@ services:
       - uamishop-ventas
     restart: unless-stopped
 
+  # ── Frontend App ──────────────────────────────────────────────
+
+  uamishop-frontend:
+    build:
+      context: ./uamishop-frontend
+      dockerfile: Dockerfile
+    image: uamishop-frontend:latest
+    container_name: uamishop-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - uamishop-gateway
+    restart: unless-stopped
+
 volumes:
   mysql_data:
