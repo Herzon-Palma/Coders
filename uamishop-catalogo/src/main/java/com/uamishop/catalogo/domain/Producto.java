@@ -85,8 +85,6 @@ public class Producto {
     }
 
     public void activar() {
-        if (imagenes.isEmpty())
-            throw new DomainException("Debe tener al menos una imagen");
         if (precio.cantidad().compareTo(java.math.BigDecimal.ZERO) <= 0)
             throw new DomainException("Precio debe ser mayor a cero");
         this.disponible = true;

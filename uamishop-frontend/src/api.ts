@@ -7,6 +7,16 @@ export const api = {
     return res.json();
   },
 
+  activateAllProducts: async (products: any[]) => {
+    for (const p of products) {
+      if (!p.disponible) {
+        await fetch(`${BASE_URL}/catalogo/api/v1/productos/${p.id}/activar`, {
+          method: 'POST'
+        });
+      }
+    }
+  },
+
   createCart: async (clienteId: string) => {
     const res = await fetch(`${BASE_URL}/ventas/api/v1/carritos`, {
       method: 'POST',
@@ -27,6 +37,18 @@ export const api = {
     return res.json();
   },
 
+  initCartCheckout: async (cartId: string) => {
+    const res = await fetch(`${BASE_URL}/ventas/api/v1/carritos/${cartId}/checkout`, {
+      method: 'POST'
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error('Init checkout error:', errText);
+      throw new Error(`Failed to initiate cart checkout: ${errText}`);
+    }
+    return res.json();
+  },
+
   checkoutCart: async (clienteId: string, direccion: any) => {
     const res = await fetch(`${BASE_URL}/ordenes/api/v1/ordenes/desde-carrito`, {
       method: 'POST',
@@ -36,7 +58,11 @@ export const api = {
         direccion
       })
     });
-    if (!res.ok) throw new Error('Failed to checkout');
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error('Checkout error:', errText);
+      throw new Error(`Failed to checkout: ${errText}`);
+    }
     return res.json();
   },
 
@@ -84,11 +110,18 @@ export const api = {
     ];
 
     for (let p of products) {
-      await fetch(`${BASE_URL}/catalogo/api/v1/productos`, {
+      const res = await fetch(`${BASE_URL}/catalogo/api/v1/productos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(p)
       });
+      if (res.ok) {
+        const created = await res.json();
+        // Activate product so it's available (disponible=true)
+        await fetch(`${BASE_URL}/catalogo/api/v1/productos/${created.id}/activar`, {
+          method: 'POST'
+        });
+      }
     }
   }
 };

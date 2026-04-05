@@ -204,7 +204,7 @@ public class CarritoService {
 
         return new CarritoResumen(
                 carrito.getId().id(),
-                carrito.getClienteId(),
+                carrito.getClienteId().getValue(),
                 carrito.getEstado().name(),
                 items,
                 carrito.calcularTotal());

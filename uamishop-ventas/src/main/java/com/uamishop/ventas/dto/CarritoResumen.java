@@ -1,6 +1,5 @@
 package com.uamishop.ventas.dto;
 
-import com.uamishop.shared.domain.ClienteId;
 import com.uamishop.shared.domain.Money;
 
 import java.math.BigDecimal;
@@ -13,7 +12,7 @@ import java.util.UUID;
  */
 public record CarritoResumen(
                 UUID carritoId,
-                ClienteId clienteId,
+                UUID clienteId,
                 String estado,
                 List<ItemCarritoResumen> items,
                 Money total) {

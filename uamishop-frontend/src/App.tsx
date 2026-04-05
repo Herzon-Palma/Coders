@@ -9,11 +9,14 @@ function App() {
   const [notification, setNotification] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [address, setAddress] = useState({
+    nombreDestinatario: 'Juan Pérez',
     calle: 'Av. Siempre Viva 123',
-    ciudad: 'Springfield',
-    estado: 'Estado',
-    codigoPostal: '12345',
-    pais: 'País'
+    ciudad: 'Ciudad de México',
+    estado: 'CDMX',
+    codigoPostal: '06600',
+    pais: 'México',
+    telefono: '5512345678',
+    instrucciones: ''
   });
 
   const CLIENT_ID = '123e4567-e89b-12d3-a456-426614174000';
@@ -36,6 +39,10 @@ function App() {
       if (prods.length === 0) {
         showNotification('Seeding initial products...');
         await api.seedProducts();
+        prods = await api.getProducts();
+      } else {
+        // Activate any products that might be disabled
+        await api.activateAllProducts(prods);
         prods = await api.getProducts();
       }
       setProducts(prods);
@@ -65,15 +72,18 @@ function App() {
 
   const handleCheckout = async () => {
     try {
+      // Paso 1: mover el carrito a estado CHECKOUT
+      await api.initCartCheckout(cart.id);
+      // Paso 2: crear la orden desde el carrito en CHECKOUT
       await api.checkoutCart(CLIENT_ID, address);
-      showNotification('Order placed successfully!');
+      showNotification('¡Orden creada exitosamente!');
       setIsModalOpen(false);
-      // Refresh cart
+      // Crear nuevo carrito vacío
       const newCart = await api.createCart(CLIENT_ID);
       setCart(newCart);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Checkout failed:', error);
-      showNotification('Checkout failed');
+      showNotification(`Error: ${error.message || 'Checkout fallido'}`);
     }
   };
 
@@ -81,8 +91,8 @@ function App() {
     return <div className="loading">Cargando uamiShop...</div>;
   }
 
-  const cartItemsCount = cart?.items?.reduce((acc: number, item: any) => acc + item.cantidad, 0) || 0;
-  const cartTotal = cart?.items?.reduce((acc: number, item: any) => acc + (item.precio * item.cantidad), 0) || 0;
+  const cartItemsCount = cart?.items?.reduce((acc: number, item: any) => acc + Number(item.cantidad), 0) || 0;
+  const cartTotal = cart?.items?.reduce((acc: number, item: any) => acc + Number(item.subtotal), 0) || 0;
 
   return (
     <div className="container">
@@ -128,21 +138,25 @@ function App() {
             ) : (
               <div>
                 {cart?.items?.map((item: any) => (
-                  <div key={item.productoId} className="cart-item">
+                  <div key={item.productoid} className="cart-item">
                     <div className="cart-item-info">
-                      <h4>Producto {item.productoId.substring(0, 8)}...</h4>
-                      <p>Cant: {item.cantidad} x ${item.precio}</p>
+                      <h4>{item.nombreProducto || `Producto ${String(item.productoid).substring(0, 8)}...`}</h4>
+                      <p>Cant: {item.cantidad} x ${Number(item.precioUnitario).toFixed(2)}</p>
                     </div>
                     <div>
-                      <strong>${item.precio * item.cantidad}</strong>
+                      <strong>${Number(item.subtotal).toFixed(2)}</strong>
                     </div>
                   </div>
                 ))}
                 <div className="cart-total">
-                  Total: ${cartTotal}
+                  Total: ${cartTotal.toFixed(2)} MXN
                 </div>
 
                 <h3 style={{ marginTop: '20px' }}>Dirección de Envío</h3>
+                <div className="form-group">
+                  <label>Nombre del destinatario</label>
+                  <input value={address.nombreDestinatario} onChange={e => setAddress({...address, nombreDestinatario: e.target.value})} />
+                </div>
                 <div className="form-group">
                   <label>Calle</label>
                   <input value={address.calle} onChange={e => setAddress({...address, calle: e.target.value})} />
@@ -157,13 +171,21 @@ function App() {
                 </div>
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <div className="form-group" style={{ flex: 1 }}>
-                    <label>C.P.</label>
-                    <input value={address.codigoPostal} onChange={e => setAddress({...address, codigoPostal: e.target.value})} />
+                    <label>C.P. (5 dígitos)</label>
+                    <input value={address.codigoPostal} maxLength={5} onChange={e => setAddress({...address, codigoPostal: e.target.value})} />
                   </div>
                   <div className="form-group" style={{ flex: 1 }}>
-                    <label>País</label>
-                    <input value={address.pais} onChange={e => setAddress({...address, pais: e.target.value})} />
+                    <label>Teléfono (10 dígitos)</label>
+                    <input value={address.telefono} maxLength={10} onChange={e => setAddress({...address, telefono: e.target.value})} />
                   </div>
+                </div>
+                <div className="form-group">
+                  <label>País (debe ser México)</label>
+                  <input value={address.pais} readOnly style={{ background: '#f5f5f5', cursor: 'not-allowed' }} />
+                </div>
+                <div className="form-group">
+                  <label>Instrucciones (opcional)</label>
+                  <input value={address.instrucciones} onChange={e => setAddress({...address, instrucciones: e.target.value})} />
                 </div>
 
                 <button className="checkout-button" onClick={handleCheckout}>
