@@ -6,6 +6,12 @@ spring:
     name: uamishop-gateway
   cloud:
     gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
       # ── Rutas hacia los microservicios ──────────────────────────
       routes:
         # Catálogo  →  /catalogo/** → http://localhost:8081/**
