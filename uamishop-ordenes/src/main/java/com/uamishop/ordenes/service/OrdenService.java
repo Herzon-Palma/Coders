@@ -210,6 +210,19 @@ public class OrdenService {
                 .orElseThrow(() -> new ResourceNotFoundException("Orden no encontrada"));
     }
 
+    public List<OrdenResponse> buscarPorCliente(UUID clienteId) {
+        return repository.findByClienteId(new ClienteId(clienteId))
+                .stream()
+                .map(orden -> new OrdenResponse(
+                        orden.getId().id(),
+                        orden.getEstado().name(),
+                        orden.getClienteId().getId(),
+                        orden.getItems().stream()
+                                .map(item -> new ItemDto(item.getProductoRef().productoid().getValue(), item.getCantidad().intValue()))
+                                .collect(Collectors.toList())))
+                .collect(Collectors.toList());
+    }
+
 
     // DTO simple — nombre y precio se obtienen del catálogo
     public record ItemDto(

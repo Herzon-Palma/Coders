@@ -1,12 +1,22 @@
-import { useState, useEffect } from 'react';
-import './App.css';
+import { useState, useEffect, Component } from 'react';
+import './index.css';
 import { api } from './api';
 
-function App() {
+class ErrorBoundary extends Component<any, any> {
+  constructor(props: any) { super(props); this.state = { hasError: false, errorStr: '' }; }
+  static getDerivedStateFromError(error: any) { window.alert("CRASH: " + error.toString() + " \n " + error.stack); return { hasError: true, errorStr: error.toString() + " \n " + error.stack }; }
+  render() { if (this.state.hasError) return <div style={{color:'red', padding:'50px'}}><pre>{this.state.errorStr}</pre></div>; return this.props.children; }
+}
+
+function MainApp() {
   const [products, setProducts] = useState<any[]>([]);
   const [cart, setCart] = useState<any>(null);
+  const [myOrders, setMyOrders] = useState<any[]>([]);
+  const [currentView, setCurrentView] = useState<'CATALOG' | 'ORDERS'>('CATALOG');
+
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState('');
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [address, setAddress] = useState({
     nombreDestinatario: 'Juan Pérez',
@@ -25,10 +35,27 @@ function App() {
     initialize();
   }, []);
 
+  useEffect(() => {
+    if (currentView === 'ORDERS') {
+      fetchOrders();
+    }
+  }, [currentView]);
+
   const showNotification = (msg: string) => {
     setNotification(msg);
     setTimeout(() => setNotification(''), 3000);
   };
+
+  const fetchOrders = async () => {
+    try {
+      const orders = await api.getOrders(CLIENT_ID);
+      setMyOrders(Array.isArray(orders) ? orders : []);
+    } catch (e: any) {
+      console.error(e);
+      showNotification('Error al cargar órdenes');
+      setMyOrders([]);
+    }
+  }
 
   const initialize = async () => {
     setLoading(true);
@@ -37,11 +64,10 @@ function App() {
       
       // If no products, seed some!
       if (prods.length === 0) {
-        showNotification('Seeding initial products...');
+        showNotification('Inicializando catálogo...');
         await api.seedProducts();
         prods = await api.getProducts();
       } else {
-        // Activate any products that might be disabled
         await api.activateAllProducts(prods);
         prods = await api.getProducts();
       }
@@ -52,7 +78,7 @@ function App() {
       setCart(cartData);
     } catch (error) {
       console.error('Error initializing:', error);
-      showNotification('Error connecting to backend');
+      showNotification('Error de conexión. Intenta recargar.');
     } finally {
       setLoading(false);
     }
@@ -63,10 +89,10 @@ function App() {
     try {
       const updatedCart = await api.addToCart(cart.id, productId, 1);
       setCart(updatedCart);
-      showNotification('Product added to cart!');
+      showNotification('¡Producto agregado al carrito!');
     } catch (error) {
       console.error('Error adding to cart:', error);
-      showNotification('Failed to add product');
+      showNotification('Hubo un error al agregar el producto');
     }
   };
 
@@ -76,8 +102,11 @@ function App() {
       await api.initCartCheckout(cart.id);
       // Paso 2: crear la orden desde el carrito en CHECKOUT
       await api.checkoutCart(CLIENT_ID, address);
-      showNotification('¡Orden creada exitosamente!');
+      
+      showNotification('✅ ¡Orden creada exitosamente!');
       setIsModalOpen(false);
+      setCurrentView('ORDERS'); // Te lleva a ver tu compra
+      
       // Crear nuevo carrito vacío
       const newCart = await api.createCart(CLIENT_ID);
       setCart(newCart);
@@ -88,7 +117,7 @@ function App() {
   };
 
   if (loading) {
-    return <div className="loading">Cargando uamiShop...</div>;
+    return <div className="loading">Sincronizando con UamiShop...</div>;
   }
 
   const cartItemsCount = cart?.items?.reduce((acc: number, item: any) => acc + Number(item.cantidad), 0) || 0;
@@ -96,80 +125,131 @@ function App() {
 
   return (
     <div className="container">
-      <header>
-        <div className="title">uamiShop</div>
-        <div className="cart-summary">
-          <button className="cart-button" onClick={() => setIsModalOpen(true)}>
-            🛒 Carrito ({cartItemsCount})
+      <header className="glass-panel">
+        <div className="brand-title">🛒 UamiShop</div>
+        <div className="nav-controls">
+          <button 
+            className={`tab-button ${currentView === 'CATALOG' ? 'active' : ''}`}
+            onClick={() => setCurrentView('CATALOG')}
+          >
+            Catálogo
+          </button>
+          <button 
+            className={`tab-button ${currentView === 'ORDERS' ? 'active' : ''}`}
+            onClick={() => setCurrentView('ORDERS')}
+          >
+            Mis Órdenes
+          </button>
+          <button className="action-button" onClick={() => setIsModalOpen(true)}>
+            Carrito ({cartItemsCount})
           </button>
         </div>
       </header>
 
       <main>
-        <h2>Nuestros Productos</h2>
-        <div className="product-grid">
-          {products.map(product => (
-            <div key={product.id} className="product-card">
-              <div className="product-image">
-                {product.nombre}
-              </div>
-              <div className="product-info">
-                <div className="product-name">{product.nombre}</div>
-                <div className="product-price">${product.precio?.monto || product.precio} {product.precio?.moneda || 'MXN'}</div>
-                <button className="add-button" onClick={() => handleAddToCart(product.id)}>
-                  Añadir al Carrito
-                </button>
-              </div>
+        {currentView === 'CATALOG' && (
+          <>
+            <h2 style={{ marginBottom: '24px', fontWeight: 300, color: 'var(--text-secondary)' }}>Nuestros Productos Premium</h2>
+            <div className="product-grid">
+              {products.map(product => (
+                <div key={product.id} className="glass-panel product-card">
+                  <div className="product-image">
+                    <span style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-secondary)' }}>
+                       {product && product.nombre ? String(product.nombre).substring(0, 3).toUpperCase() : 'PRO'}
+                    </span>
+                  </div>
+                  <div className="product-info">
+                    <div className="product-name">{product.nombre}</div>
+                    <div className="product-price">${Number(product.precio?.monto || product.precio).toLocaleString()} {product.precio?.moneda || 'MXN'}</div>
+                    <button className="action-button" onClick={() => handleAddToCart(product.id)}>
+                      Añadir a Carrito
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </>
+        )}
+
+        {currentView === 'ORDERS' && (
+          <>
+            <h2 style={{ marginBottom: '24px', fontWeight: 300, color: 'var(--text-secondary)' }}>Historial de Órdenes</h2>
+            <div className="orders-list">
+              {!Array.isArray(myOrders) || myOrders.length === 0 ? (
+                <div className="glass-panel" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                  Aún no tienes órdenes registradas.
+                </div>
+              ) : (
+                [...myOrders].reverse().map((orden, index) => (
+                  <div key={orden?.ordenId || index} className="glass-panel order-card">
+                    <div className="order-header">
+                      <span className="order-id">#{orden?.ordenId || 'N/A'}</span>
+                      <span className={`order-status status-${orden?.estadoOrden}`}>{orden?.estadoOrden ? String(orden.estadoOrden).replace('_', ' ') : 'N/A'}</span>
+                    </div>
+                    <div className="order-items">
+                      {Array.isArray(orden?.items) && orden.items.map((item: any, idx: number) => (
+                        <div key={idx} className="order-item-chip">
+                          Prod: {item?.productoId ? String(item.productoId).substring(0,6) : '???'}... (x{item?.cantidad || 0})
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </>
+        )}
       </main>
 
       {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
+        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+          <div className="glass-panel modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Tu Carrito</h2>
-              <button className="close-button" onClick={() => setIsModalOpen(false)}>×</button>
+              <h2>Checkout</h2>
+              <button className="close-button" onClick={() => setIsModalOpen(false)}>✕</button>
             </div>
             
             {cart?.items?.length === 0 ? (
-              <p>Tu carrito está vacío.</p>
+              <p style={{ color: 'var(--text-secondary)' }}>Tu carrito está vacío. Agrega productos desde el catálogo.</p>
             ) : (
               <div>
-                {cart?.items?.map((item: any) => (
-                  <div key={item.productoid} className="cart-item">
-                    <div className="cart-item-info">
-                      <h4>{item.nombreProducto || `Producto ${String(item.productoid).substring(0, 8)}...`}</h4>
-                      <p>Cant: {item.cantidad} x ${Number(item.precioUnitario).toFixed(2)}</p>
+                <div style={{ maxHeight: '200px', overflowY: 'auto', marginBottom: '24px' }}>
+                  {cart?.items?.map((item: any) => (
+                    <div key={item.productoid} className="cart-item">
+                      <div className="cart-item-info">
+                        <h4 style={{ margin: '0 0 4px 0' }}>{item.nombreProducto || `Producto ${String(item.productoid).substring(0, 8)}`}</h4>
+                        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Cant: {item.cantidad} × ${Number(item.precioUnitario).toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <strong>${Number(item.subtotal).toLocaleString()}</strong>
+                      </div>
                     </div>
-                    <div>
-                      <strong>${Number(item.subtotal).toFixed(2)}</strong>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
                 <div className="cart-total">
-                  Total: ${cartTotal.toFixed(2)} MXN
+                  Total Final: ${cartTotal.toLocaleString()} MXN
                 </div>
 
-                <h3 style={{ marginTop: '20px' }}>Dirección de Envío</h3>
+                <h3 style={{ marginTop: '32px', marginBottom: '16px', color: 'var(--primary-color)' }}>Datos de Envío</h3>
                 <div className="form-group">
                   <label>Nombre del destinatario</label>
                   <input value={address.nombreDestinatario} onChange={e => setAddress({...address, nombreDestinatario: e.target.value})} />
                 </div>
                 <div className="form-group">
-                  <label>Calle</label>
+                  <label>Calle y Número</label>
                   <input value={address.calle} onChange={e => setAddress({...address, calle: e.target.value})} />
                 </div>
-                <div className="form-group">
-                  <label>Ciudad</label>
-                  <input value={address.ciudad} onChange={e => setAddress({...address, ciudad: e.target.value})} />
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div className="form-group" style={{ flex: 1 }}>
+                    <label>Ciudad</label>
+                    <input value={address.ciudad} onChange={e => setAddress({...address, ciudad: e.target.value})} />
+                  </div>
+                  <div className="form-group" style={{ flex: 1 }}>
+                    <label>Estado</label>
+                    <input value={address.estado} onChange={e => setAddress({...address, estado: e.target.value})} />
+                  </div>
                 </div>
-                <div className="form-group">
-                  <label>Estado</label>
-                  <input value={address.estado} onChange={e => setAddress({...address, estado: e.target.value})} />
-                </div>
-                <div style={{ display: 'flex', gap: '10px' }}>
+                <div style={{ display: 'flex', gap: '12px' }}>
                   <div className="form-group" style={{ flex: 1 }}>
                     <label>C.P. (5 dígitos)</label>
                     <input value={address.codigoPostal} maxLength={5} onChange={e => setAddress({...address, codigoPostal: e.target.value})} />
@@ -180,16 +260,12 @@ function App() {
                   </div>
                 </div>
                 <div className="form-group">
-                  <label>País (debe ser México)</label>
-                  <input value={address.pais} readOnly style={{ background: '#f5f5f5', cursor: 'not-allowed' }} />
-                </div>
-                <div className="form-group">
-                  <label>Instrucciones (opcional)</label>
-                  <input value={address.instrucciones} onChange={e => setAddress({...address, instrucciones: e.target.value})} />
+                  <label>País (Solo México)</label>
+                  <input value={address.pais} readOnly style={{ opacity: 0.5 }} />
                 </div>
 
                 <button className="checkout-button" onClick={handleCheckout}>
-                  Pagar y Confirmar Orden
+                  Pagar y Procesar Orden
                 </button>
               </div>
             )}
@@ -202,4 +278,6 @@ function App() {
   );
 }
 
-export default App;
+export default function App() {
+  return <ErrorBoundary><MainApp /></ErrorBoundary>;
+}

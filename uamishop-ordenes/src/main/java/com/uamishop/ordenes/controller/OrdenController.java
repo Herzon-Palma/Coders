@@ -98,6 +98,13 @@ public class OrdenController {
     public ResponseEntity<OrdenResponse> crearDesdeCarrito(@Valid @RequestBody CrearDesdeCarritoRequest request) {
         return ResponseEntity.ok(service.crearDesdeCarrito(request.clienteId(), request.direccion()));
     }
+
+    @GetMapping("/cliente/{clienteId}")
+    @Operation(summary = "Obtener órdenes por cliente", description = "Obtiene todas las órdenes asociadas a un cliente.")
+    public ResponseEntity<List<OrdenResponse>> obtenerPorCliente(
+            @Parameter(description = "ID del cliente") @PathVariable UUID clienteId) {
+        return ResponseEntity.ok(service.buscarPorCliente(clienteId));
+    }
 }
 
 // DTOs

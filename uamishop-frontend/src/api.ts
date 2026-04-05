@@ -66,6 +66,17 @@ export const api = {
     return res.json();
   },
 
+  getOrders: async (clienteId: string) => {
+    const res = await fetch(`${BASE_URL}/ordenes/api/v1/ordenes/cliente/${clienteId}`, {
+      method: 'GET'
+    });
+    if (!res.ok) {
+      console.error('Failed to fetch orders');
+      return [];
+    }
+    return res.json();
+  },
+
   seedProducts: async () => {
     // Primero, creamos una categoria dummy
     let catId = "123e4567-e89b-12d3-a456-426614174000";
