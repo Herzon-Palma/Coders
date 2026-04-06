@@ -36,13 +36,11 @@ function MainApp() {
   const [products, setProducts] = useState<any[]>([]);
   const [cart, setCart] = useState<any>(null);
   const [myOrders, setMyOrders] = useState<any[]>([]);
-  const [currentView, setCurrentView] = useState<'CATALOG' | 'ORDERS'>('CATALOG');
+  const [currentView, setCurrentView] = useState<'CATALOG' | 'ORDERS' | 'CHECKOUT'>('CATALOG');
   const [activeCategory, setActiveCategory] = useState<string>('Todos');
 
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState('');
-  
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [address, setAddress] = useState({
     nombreDestinatario: 'Juan Pérez',
     calle: 'Av. Siempre Viva 123',
@@ -55,16 +53,6 @@ function MainApp() {
   });
 
   const CLIENT_ID = '123e4567-e89b-12d3-a456-426614174000';
-
-  // UX: cerrar modal con Escape
-  useEffect(() => {
-    if (!isModalOpen) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setIsModalOpen(false);
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isModalOpen]);
 
   useEffect(() => {
     initialize();
@@ -146,7 +134,6 @@ function MainApp() {
       await api.checkoutCart(CLIENT_ID, address);
       
       showNotification('✅ ¡Orden creada exitosamente!');
-      setIsModalOpen(false);
       setCurrentView('ORDERS');
       
       const newCart = await api.createCart(CLIENT_ID);
@@ -214,7 +201,10 @@ function MainApp() {
           >
             Mis Órdenes
           </button>
-          <button className="action-button cart-btn" onClick={() => setIsModalOpen(true)}>
+          <button 
+            className={`action-button cart-btn ${currentView === 'CHECKOUT' ? 'active' : ''}`}
+            onClick={() => setCurrentView('CHECKOUT')}
+          >
             <span className="cart-icon">🛒</span>
             <span>Carrito</span>
             {cartItemsCount > 0 && <span className="cart-badge">{cartItemsCount}</span>}
@@ -342,82 +332,85 @@ function MainApp() {
             </div>
           </>
         )}
-      </main>
 
-      {isModalOpen && (
-        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
-          <div className="glass-panel modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Checkout</h2>
-              <button className="close-button" onClick={() => setIsModalOpen(false)}>✕</button>
-            </div>
+        {currentView === 'CHECKOUT' && (
+          <div className="checkout-page glass-panel">
+            <h2 style={{ marginBottom: '24px', fontWeight: 300, color: 'var(--text-secondary)' }}>Resumen de Compra</h2>
             
             {cart?.items?.length === 0 ? (
               <div className="empty-cart">
                 <div className="empty-state-icon">🛒</div>
                 <p style={{ color: 'var(--text-secondary)' }}>Tu carrito está vacío. Agrega productos desde el catálogo.</p>
+                <button className="action-button" style={{ marginTop: '16px' }} onClick={() => setCurrentView('CATALOG')}>
+                  Ir al Catálogo
+                </button>
               </div>
             ) : (
-              <div>
-                <div style={{ maxHeight: '200px', overflowY: 'auto', marginBottom: '24px' }}>
-                  {cart?.items?.map((item: any) => (
-                    <div key={item.productoid} className="cart-item">
-                      <div className="cart-item-info">
-                        <h4 style={{ margin: '0 0 4px 0' }}>{item.nombreProducto || `Producto ${String(item.productoid).substring(0, 8)}`}</h4>
-                        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Cant: {item.cantidad} × ${Number(item.precioUnitario).toLocaleString()}</p>
+              <div className="checkout-grid">
+                <div className="checkout-items-section glass-panel-inner">
+                  <h3 style={{ marginTop: '0', marginBottom: '16px', color: 'var(--text-primary)' }}>Productos</h3>
+                  <div style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: '12px' }} className="custom-scroll">
+                    {cart?.items?.map((item: any) => (
+                      <div key={item.productoid} className="cart-item">
+                        <div className="cart-item-info">
+                          <h4 style={{ margin: '0 0 4px 0', fontWeight: 600 }}>{item.nombreProducto || `Producto ${String(item.productoid).substring(0, 8)}`}</h4>
+                          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Cant: {item.cantidad} × ${Number(item.precioUnitario).toLocaleString()}</p>
+                        </div>
+                        <div style={{ fontWeight: 'bold' }}>
+                          ${Number(item.subtotal).toLocaleString()}
+                        </div>
                       </div>
-                      <div>
-                        <strong>${Number(item.subtotal).toLocaleString()}</strong>
-                      </div>
+                    ))}
+                  </div>
+                  <div className="cart-total" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', marginTop: '16px' }}>
+                    Total Final: ${cartTotal.toLocaleString()} MXN
+                  </div>
+                </div>
+
+                <div className="checkout-form-section glass-panel-inner">
+                  <h3 style={{ marginTop: '0', marginBottom: '20px', color: 'var(--primary-color)' }}>Datos de Envío</h3>
+                  <div className="form-group">
+                    <label>Nombre del destinatario</label>
+                    <input value={address.nombreDestinatario} onChange={e => setAddress({...address, nombreDestinatario: e.target.value})} />
+                  </div>
+                  <div className="form-group">
+                    <label>Calle y Número</label>
+                    <input value={address.calle} onChange={e => setAddress({...address, calle: e.target.value})} />
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Ciudad</label>
+                      <input value={address.ciudad} onChange={e => setAddress({...address, ciudad: e.target.value})} />
                     </div>
-                  ))}
-                </div>
-                <div className="cart-total">
-                  Total Final: ${cartTotal.toLocaleString()} MXN
-                </div>
+                    <div className="form-group">
+                      <label>Estado</label>
+                      <input value={address.estado} onChange={e => setAddress({...address, estado: e.target.value})} />
+                    </div>
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>C.P. (5 dígitos)</label>
+                      <input value={address.codigoPostal} maxLength={5} onChange={e => setAddress({...address, codigoPostal: e.target.value})} />
+                    </div>
+                    <div className="form-group">
+                      <label>Teléfono (10 dígitos)</label>
+                      <input value={address.telefono} maxLength={10} onChange={e => setAddress({...address, telefono: e.target.value})} />
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label>País (Solo México)</label>
+                    <input value={address.pais} readOnly style={{ opacity: 0.5 }} />
+                  </div>
 
-                <h3 style={{ marginTop: '32px', marginBottom: '16px', color: 'var(--primary-color)' }}>Datos de Envío</h3>
-                <div className="form-group">
-                  <label>Nombre del destinatario</label>
-                  <input value={address.nombreDestinatario} onChange={e => setAddress({...address, nombreDestinatario: e.target.value})} />
+                  <button className="checkout-button" onClick={handleCheckout}>
+                    Pagar y Procesar Orden
+                  </button>
                 </div>
-                <div className="form-group">
-                  <label>Calle y Número</label>
-                  <input value={address.calle} onChange={e => setAddress({...address, calle: e.target.value})} />
-                </div>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <div className="form-group" style={{ flex: 1 }}>
-                    <label>Ciudad</label>
-                    <input value={address.ciudad} onChange={e => setAddress({...address, ciudad: e.target.value})} />
-                  </div>
-                  <div className="form-group" style={{ flex: 1 }}>
-                    <label>Estado</label>
-                    <input value={address.estado} onChange={e => setAddress({...address, estado: e.target.value})} />
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <div className="form-group" style={{ flex: 1 }}>
-                    <label>C.P. (5 dígitos)</label>
-                    <input value={address.codigoPostal} maxLength={5} onChange={e => setAddress({...address, codigoPostal: e.target.value})} />
-                  </div>
-                  <div className="form-group" style={{ flex: 1 }}>
-                    <label>Teléfono (10 dígitos)</label>
-                    <input value={address.telefono} maxLength={10} onChange={e => setAddress({...address, telefono: e.target.value})} />
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label>País (Solo México)</label>
-                  <input value={address.pais} readOnly style={{ opacity: 0.5 }} />
-                </div>
-
-                <button className="checkout-button" onClick={handleCheckout}>
-                  Pagar y Procesar Orden
-                </button>
               </div>
             )}
           </div>
-        </div>
-      )}
+        )}
+      </main>
 
       {notification && <div className="notification">{notification}</div>}
     </div>
