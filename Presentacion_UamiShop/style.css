@@ -1,0 +1,208 @@
+:root {
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+  --secondary: #ec4899;
+  --accent: #22d3ee;
+  --bg-dark: #0f172a;
+  --card-bg: rgba(30, 41, 59, 0.7);
+  --glass: rgba(255, 255, 255, 0.05);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --font-outfit: 'Outfit', sans-serif;
+  --font-inter: 'Inter', sans-serif;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Outfit:wght@400;700;900&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  font-family: var(--font-inter);
+  overflow: hidden;
+}
+
+.hero-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-image: url('hero.png');
+  background-size: cover;
+  background-position: center;
+  filter: brightness(0.3) blur(4px);
+  z-index: -1;
+}
+
+.presentation-container {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 1000px;
+}
+
+.slide {
+  position: absolute;
+  width: 85%;
+  max-width: 1100px;
+  height: 75vh;
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--glass);
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0;
+  transform: translateZ(-200px) rotateX(10deg);
+  pointer-events: none;
+}
+
+.slide.active {
+  opacity: 1;
+  transform: translateZ(0) rotateX(0);
+  pointer-events: auto;
+}
+
+.slide.prev {
+  transform: translateX(-120%) rotateY(-20deg);
+  opacity: 0;
+}
+
+.slide.next {
+  transform: translateX(120%) rotateY(20deg);
+  opacity: 0;
+}
+
+h1, h2 {
+  font-family: var(--font-outfit);
+  margin-bottom: 1.5rem;
+  background: linear-gradient(to right, #fff, var(--primary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+h1 { font-size: 3.5rem; text-transform: uppercase; letter-spacing: 2px; }
+h2 { font-size: 2.2rem; }
+
+p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.highlight { color: var(--accent); font-weight: 600; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  margin-top: auto;
+}
+
+.feature-card {
+  background: var(--glass);
+  padding: 1.5rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.feature-card:hover { transform: translateY(-5px); border-color: var(--primary); }
+
+.feature-card h3 {
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+}
+
+/* Controls */
+.controls {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  display: flex;
+  gap: 1rem;
+  z-index: 100;
+}
+
+button {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.2rem;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  font-size: 1.2rem;
+  transition: all 0.2s;
+}
+
+button:hover {
+  background: var(--primary-hover);
+  transform: scale(1.1);
+}
+
+button:disabled {
+  background: #334155;
+  cursor: not-allowed;
+}
+
+.progress-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  background: linear-gradient(to right, var(--primary), var(--accent));
+  width: 0%;
+  transition: width 0.3s;
+  z-index: 101;
+}
+
+.step-box {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.step-num {
+  background: var(--primary);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+code {
+  background: #000;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  color: var(--accent);
+}
+
+.diagram-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+svg {
+  width: 100%;
+  max-width: 800px;
+}
