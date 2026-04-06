@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>UamiShop: De Monolito a Microservicios</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="hero-bg"></div>
+  <div class="progress-bar" id="progress"></div>
+
+  <div class="presentation-container">
+    <!-- Slide 1: Welcome -->
+    <div class="slide active">
+      <h1>UamiShop</h1>
+      <h2>Transformación: De Monolito a Microservicios</h2>
+      <p>Un viaje por la arquitectura moderna, desde el Diseño Guiado por Dominio hasta la arquitectura escalable de microservicios.</p>
+      <div class="grid">
+        <div class="feature-card">
+          <h3>Reto Principal</h3>
+          <p>Desacoplar la lógica de negocio y garantizar la consistencia en un entorno distribuido.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Metodología</h3>
+          <p>Evolución iterativa basada en DDD, Monolito Modular y Extracción por Bounded Contexts.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 2: Fase 1 - DDD y API Fundamentos -->
+    <div class="slide">
+      <h1>Fase 1: Fundamentos</h1>
+      <h2>Diseño Guiado por Dominio (DDD)</h2>
+      <p>Establecimos los cimientos del proyecto utilizando Bounded Contexts y el Shared Kernel.</p>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <div>
+          <div class="step-box"><span class="step-num">1</span><span>Identificamos los contextos de <strong>Catálogo, Ventas y Ordenes</strong>.</span></div>
+          <div class="step-box"><span class="step-num">2</span><span>Definimos el <strong>Shared Kernel</strong> (Money, IDs) para cruzar fronteras.</span></div>
+          <div class="step-box"><span class="step-num">3</span><span>Implementamos <strong>API REST</strong> con versionamiento v1/v2.</span></div>
+        </div>
+        <div class="feature-card">
+          <h3>Logro</h3>
+          <p>Un modelo de negocio robusto que guía la estructura técnica, no al revés.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 3: Fase 2 - Monolito Modular -->
+    <div class="slide">
+      <h1>Fase 2: Monolito Modular</h1>
+      <h2>Encapsulamiento y APIs Internas</h2>
+      <p>Transformamos el sistema en un monolito modular para preparar la extracción de microservicios.</p>
+      <div class="grid">
+        <div class="feature-card">
+          <h3>Ocultamiento de Información</h3>
+          <p>Cada módulo expone una interfaz pública única (<code>VentasApi</code>), ocultando su implementación interna.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Dependencias Controladas</h3>
+          <p>Las interdependencias entre módulos se resuelven a través de servicios del Shared Kernel y DTOs específicos.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 4: Fase 3 - Microservicios y Docker -->
+    <div class="slide">
+      <h1>Fase 3: Microservicios</h1>
+      <h2>Despliegue con Docker y Orquestación</h2>
+      <p>Extrajimos los módulos hacia contenedores independientes, escalables de forma individual.</p>
+      <div style="display: flex; gap: 2rem;">
+        <div style="flex: 1;">
+          <ul style="list-style: none;">
+            <li style="margin-bottom: 1rem;">🔹 <strong>uamishop-catalogo:</strong> Puerto 8081</li>
+            <li style="margin-bottom: 1rem;">🔹 <strong>uamishop-ordenes:</strong> Puerto 8082</li>
+            <li style="margin-bottom: 1rem;">🔹 <strong>uamishop-ventas:</strong> Puerto 8083</li>
+            <li style="margin-bottom: 1rem;">🔹 <strong>uamishop-gateway:</strong> Puerto 8080</li>
+          </ul>
+        </div>
+        <div class="feature-card" style="flex: 1;">
+           <h3>Docker Compose</h3>
+           <p>Orquestación local con bases de datos segregadas y redes aisladas.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 5: Resiliencia - Circuit Breaker -->
+    <div class="slide">
+      <h1>Resiliencia</h1>
+      <h2>Patrones con Resilience4J</h2>
+      <p>Implementamos tolerancia a fallos para asegurar que una caída parcial no afecte a todo el sistema.</p>
+      <div class="feature-card">
+        <h3>Circuit Breaker</h3>
+        <p>Si el servicio de Catálogo está inactivo, el servicio de Ventas devuelve un <code>503 Service Unavailable</code> controlado con un mensaje significativo, evitando que los hilos de ejecución se bloqueen.</p>
+      </div>
+      <div style="margin-top: 1rem;">
+        <code>@CircuitBreaker(name = "catalogoService")</code>
+      </div>
+    </div>
+
+    <!-- Slide 6: Consistencia - Transactional Outbox -->
+    <div class="slide">
+      <h1>Consistencia Distribuida</h1>
+      <h2>Transactional Outbox Pattern</h2>
+      <p>Garantizamos que los eventos y las actualizaciones en la base de datos sean atómicos.</p>
+      <div class="diagram-container">
+        <!-- SVG simplified diagram -->
+        <svg viewBox="0 0 400 150">
+          <rect x="10" y="50" width="80" height="40" rx="5" fill="#6366f1" />
+          <text x="50" y="75" fill="white" text-anchor="middle">OrdenService</text>
+          <line x1="90" y1="70" x2="160" y2="70" stroke="white" stroke-width="2" marker-end="url(#arrow)" />
+          <rect x="160" y="40" width="80" height="60" rx="5" fill="#1e293b" stroke="#6366f1" />
+          <text x="200" y="70" fill="white" text-anchor="middle" font-size="10">DB Transacción</text>
+          <text x="200" y="85" fill="#f8fafc" text-anchor="middle" font-size="8">Orden + Outbox Event</text>
+          <line x1="240" y1="70" x2="310" y2="70" stroke="white" stroke-width="2" stroke-dasharray="4" />
+          <circle cx="340" cy="70" r="20" fill="#ec4899" />
+          <text x="340" y="75" fill="white" text-anchor="middle" font-size="8">RabbitMQ</text>
+          <defs>
+            <marker id="arrow" markerWidth="10" markerHeight="10" refX="0" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L0,6 L9,3 z" fill="white" />
+            </marker>
+          </defs>
+        </svg>
+      </div>
+      <p style="font-size: 0.9rem;">El <strong>OutboxPublisher</strong> procesa eventos pendientes y asegura el <em>"Delivery At-least-once"</em>.</p>
+    </div>
+
+    <!-- Slide 7: Calidad y Frontend -->
+    <div class="slide">
+      <h1>Pruebas y UI</h1>
+      <h2>Testing con Karate y Frontend IA</h2>
+      <p>Aseguramos la calidad del API y una experiencia de usuario moderna.</p>
+      <div class="grid">
+        <div class="feature-card">
+          <h3>Karate Testing</h3>
+          <p>Pruebas automatizadas de extremo a extremo (E2E) a través del API Gateway.</p>
+        </div>
+        <div class="feature-card" id="frontend-card">
+          <h3>Frontend Moderno</h3>
+          <p>Potenciado por Vite y React, con un diseño estético y consumo dinámico de microservicios.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 8: Conclusiones -->
+    <div class="slide">
+      <h1>Lecciones Aprendidas</h1>
+      <h2>Conclusiones del Proyecto</h2>
+      <p>Reflexión sobre el proceso de ingeniería de software.</p>
+      <ul style="margin-left: 2rem; color: var(--text-muted);">
+        <li style="margin-bottom: 0.5rem;">✅ La modularización es el paso previo esencial antes de la distribución física.</li>
+        <li style="margin-bottom: 0.5rem;">✅ El desacoplamiento no es gratuito; requiere patrones de consistencia y resiliencia.</li>
+        <li style="margin-bottom: 0.5rem;">✅ Las herramientas como Docker agilizan dramáticamente el despliegue y desarrollo local.</li>
+        <li style="margin-bottom: 0.5rem;">✅ La documentación (OpenAPI/Swagger) y pruebas integradas son la columna vertebral de la colaboración.</li>
+      </ul>
+      <h2 style="margin-top: 2rem; font-size: 1.5rem; text-align: center;">¡Gracias por su atención!</h2>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="prev" disabled>&lt;</button>
+    <button id="next">&gt;</button>
+  </div>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const prevBtn = document.getElementById('prev');
+    const nextBtn = document.getElementById('next');
+    const progressBar = document.getElementById('progress');
+    let currentSlide = 0;
+
+    function updateSlide() {
+      slides.forEach((slide, index) => {
+        slide.classList.remove('active', 'prev', 'next');
+        if (index === currentSlide) {
+          slide.classList.add('active');
+        } else if (index < currentSlide) {
+          slide.classList.add('prev');
+        } else {
+          slide.classList.add('next');
+        }
+      });
+
+      prevBtn.disabled = currentSlide === 0;
+      nextBtn.disabled = currentSlide === slides.length - 1;
+      
+      const progress = ((currentSlide) / (slides.length - 1)) * 100;
+      progressBar.style.width = progress + '%';
+    }
+
+    prevBtn.addEventListener('click', () => {
+      if (currentSlide > 0) {
+        currentSlide--;
+        updateSlide();
+      }
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if (currentSlide < slides.length - 1) {
+        currentSlide++;
+        updateSlide();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') nextBtn.click();
+      if (e.key === 'ArrowLeft') prevBtn.click();
+    });
+  </script>
+</body>
+</html>
