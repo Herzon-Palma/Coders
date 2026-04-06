@@ -32,9 +32,19 @@ function getCategoryIcon(nombre: string): string {
   return CATEGORY_ICONS[nombre] ?? '🛍️';
 }
 
+function stringToColor(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const h = Math.abs(hash) % 360;
+  return `hsl(${h}, 70%, 40%)`;
+}
+
 function MainApp() {
   const [products, setProducts] = useState<any[]>([]);
   const [cart, setCart] = useState<any>(null);
+  const [addedProducts, setAddedProducts] = useState<Record<string, boolean>>({});
   const [myOrders, setMyOrders] = useState<any[]>([]);
   const [currentView, setCurrentView] = useState<'CATALOG' | 'ORDERS' | 'CHECKOUT'>('CATALOG');
   const [activeCategory, setActiveCategory] = useState<string>('Todos');
@@ -121,6 +131,10 @@ function MainApp() {
     try {
       const updatedCart = await api.addToCart(cart.id, productId, 1);
       setCart(updatedCart);
+      
+      setAddedProducts(prev => ({ ...prev, [productId]: true }));
+      setTimeout(() => setAddedProducts(prev => ({ ...prev, [productId]: false })), 1500);
+
       showNotification('¡Producto agregado al carrito!');
     } catch (error) {
       console.error('Error adding to cart:', error);
@@ -168,6 +182,15 @@ function MainApp() {
     if (activeCategory === 'Todos') return groupedProducts;
     return { [activeCategory]: groupedProducts[activeCategory] ?? [] };
   }, [activeCategory, groupedProducts]);
+
+  const isAddressValid = useMemo(() => {
+    return address.nombreDestinatario.trim() !== '' &&
+           address.calle.trim() !== '' &&
+           address.ciudad.trim() !== '' &&
+           address.estado.trim() !== '' &&
+           address.codigoPostal.trim().length === 5 &&
+           address.telefono.trim().length === 10;
+  }, [address]);
   // ──────────────────────────────────────────────────────────────────────────
 
   if (loading) {
@@ -193,21 +216,23 @@ function MainApp() {
             className={`tab-button ${currentView === 'CATALOG' ? 'active' : ''}`}
             onClick={() => setCurrentView('CATALOG')}
           >
-            Catálogo
+            <span className="nav-icon">📦</span>
+            <span className="nav-label">Catálogo</span>
           </button>
           <button 
             className={`tab-button ${currentView === 'ORDERS' ? 'active' : ''}`}
             onClick={() => setCurrentView('ORDERS')}
           >
-            Mis Órdenes
+            <span className="nav-icon">📜</span>
+            <span className="nav-label">Mis Órdenes</span>
           </button>
           <button 
             className={`action-button cart-btn ${currentView === 'CHECKOUT' ? 'active' : ''}`}
             onClick={() => setCurrentView('CHECKOUT')}
           >
             <span className="cart-icon">🛒</span>
-            <span>Carrito</span>
-            {cartItemsCount > 0 && <span className="cart-badge">{cartItemsCount}</span>}
+            <span className="nav-label">Carrito</span>
+            {cartItemsCount > 0 && <span key={cartItemsCount} className="cart-badge">{cartItemsCount}</span>}
           </button>
         </div>
       </header>
@@ -230,16 +255,16 @@ function MainApp() {
             </div>
 
             {/* Secciones por categoría */}
-            {Object.entries(filteredGroups).map(([catName, prods]) => (
-              <section key={catName} className="category-section">
+            {Object.entries(filteredGroups).map(([catName, prods], catIndex) => (
+              <section key={catName} className="category-section animate-slide-up" style={{ animationDelay: `${catIndex * 0.1}s` }}>
                 <div className="category-section-header">
                   <span className="category-section-icon">{getCategoryIcon(catName)}</span>
                   <h2 className="category-section-title">{catName}</h2>
                   <span className="category-section-count">{prods.length} producto{prods.length !== 1 ? 's' : ''}</span>
                 </div>
                 <div className="product-grid">
-                  {prods.map(product => (
-                    <div key={product.id} className="glass-panel product-card">
+                  {prods.map((product, prodIndex) => (
+                    <div key={product.id} className="glass-panel product-card animate-pop-in" style={{ animationDelay: `${0.1 + (prodIndex * 0.05)}s` }}>
                       <div className="product-image" aria-label={product?.nombre || 'Producto'}>
                         {product?.imagenes?.[0]?.url ? (
                           <img
@@ -254,7 +279,7 @@ function MainApp() {
                             }}
                           />
                         ) : (
-                          <span className="product-image-fallback">
+                          <span className="product-image-fallback" style={{ background: stringToColor(product.id) }}>
                             {product?.nombre ? String(product.nombre).substring(0, 3).toUpperCase() : 'PRO'}
                           </span>
                         )}
@@ -266,8 +291,11 @@ function MainApp() {
                         <div className="product-name">{product.nombre}</div>
                         <div className="product-desc">{product.descripcion}</div>
                         <div className="product-price">${Number(product.precio?.monto || product.precio).toLocaleString()} <span className="product-currency">{product.precio?.moneda || 'MXN'}</span></div>
-                        <button className="action-button add-to-cart-btn" onClick={() => handleAddToCart(product.id)}>
-                          + Añadir al Carrito
+                        <button 
+                          className={`action-button add-to-cart-btn ${addedProducts[product.id] ? 'added' : ''}`} 
+                          onClick={() => handleAddToCart(product.id)}
+                        >
+                          {addedProducts[product.id] ? '✔ Añadido' : '+ Añadir al Carrito'}
                         </button>
                       </div>
                     </div>
@@ -292,7 +320,7 @@ function MainApp() {
                 </div>
               ) : (
                 [...myOrders].reverse().map((orden, index) => (
-                  <div key={orden?.ordenId || index} className="glass-panel order-card">
+                  <div key={orden?.ordenId || index} className="glass-panel order-card animate-slide-up" style={{ animationDelay: `${index * 0.08}s` }}>
                     <div className="order-header">
                       <span className="order-title">Orden #{myOrders.length - index}</span>
                       <span className={`order-status status-${orden?.estadoOrden}`}>{orden?.estadoOrden ? String(orden.estadoOrden).replace('_', ' ') : 'N/A'}</span>
@@ -314,7 +342,7 @@ function MainApp() {
                                 }}
                               />
                             ) : (
-                              <span className="order-item-fallback">
+                              <span className="order-item-fallback" style={{ background: stringToColor(item.productoid || item.nombreProducto || 'unknown') }}>
                                 {item?.nombreProducto ? String(item.nombreProducto).substring(0, 2).toUpperCase() : 'PR'}
                               </span>
                             )}
@@ -347,7 +375,7 @@ function MainApp() {
               </div>
             ) : (
               <div className="checkout-grid">
-                <div className="checkout-items-section glass-panel-inner">
+                <div className="checkout-items-section glass-panel-inner animate-slide-right">
                   <h3 style={{ marginTop: '0', marginBottom: '16px', color: 'var(--text-primary)' }}>Productos</h3>
                   <div style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: '12px' }} className="custom-scroll">
                     {cart?.items?.map((item: any) => (
@@ -367,7 +395,7 @@ function MainApp() {
                   </div>
                 </div>
 
-                <div className="checkout-form-section glass-panel-inner">
+                <div className="checkout-form-section glass-panel-inner animate-slide-left">
                   <h3 style={{ marginTop: '0', marginBottom: '20px', color: 'var(--primary-color)' }}>Datos de Envío</h3>
                   <div className="form-group">
                     <label>Nombre del destinatario</label>
@@ -402,7 +430,11 @@ function MainApp() {
                     <input value={address.pais} readOnly style={{ opacity: 0.5 }} />
                   </div>
 
-                  <button className="checkout-button" onClick={handleCheckout}>
+                  <button 
+                    className="checkout-button" 
+                    onClick={handleCheckout}
+                    disabled={!isAddressValid}
+                  >
                     Pagar y Procesar Orden
                   </button>
                 </div>
