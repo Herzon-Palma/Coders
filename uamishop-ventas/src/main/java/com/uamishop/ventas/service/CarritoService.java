@@ -50,10 +50,10 @@ public class CarritoService {
 
     @Transactional
     public Carrito crear(ClienteId clienteId) {
-        // Podríamos validar si ya existe un carrito ACTIVO para este cliente antes de
-        // crear otro
-        Carrito nuevoCarrito = Carrito.crear(clienteId);
-        return carritoRepository.save(nuevoCarrito);
+        // Idempotente: si ya existe un carrito ACTIVO para el cliente, reutilizarlo.
+        return carritoRepository
+                .findFirstByClienteIdAndEstadoOrderByFechaActualizacionDesc(clienteId, com.uamishop.ventas.domain.EstadoCarrito.ACTIVO)
+                .orElseGet(() -> carritoRepository.save(Carrito.crear(clienteId)));
     }
 
     @Transactional(readOnly = true)
@@ -177,7 +177,9 @@ public class CarritoService {
     @Transactional(readOnly = true)
     public Optional<CarritoResumen> obtenerCarritoActivoDeCliente(UUID clienteId) {
         return carritoRepository
-                .findByClienteIdAndEstado(new ClienteId(clienteId), com.uamishop.ventas.domain.EstadoCarrito.ACTIVO)
+                .findFirstByClienteIdAndEstadoOrderByFechaActualizacionDesc(
+                        new ClienteId(clienteId),
+                        com.uamishop.ventas.domain.EstadoCarrito.ACTIVO)
                 .map(this::mapToResumen);
     }
 
@@ -187,8 +189,10 @@ public class CarritoService {
     }
 
     public Optional<CarritoResumen> obtenerCarritoParaCheckout(UUID clienteUuid) {
-        return carritoRepository.findByClienteIdAndEstado(new ClienteId(clienteUuid),
-                com.uamishop.ventas.domain.EstadoCarrito.CHECKOUT)
+        return carritoRepository
+                .findFirstByClienteIdAndEstadoOrderByFechaActualizacionDesc(
+                        new ClienteId(clienteUuid),
+                        com.uamishop.ventas.domain.EstadoCarrito.CHECKOUT)
                 .map(this::mapToResumen);
     }
 

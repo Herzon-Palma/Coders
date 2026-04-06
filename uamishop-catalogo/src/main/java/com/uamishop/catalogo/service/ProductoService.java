@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.Optional;
+import java.util.Comparator;
 
 
 @Service
@@ -40,6 +41,12 @@ public class ProductoService {
                 request.sku(),
                 new Money(request.precio(), request.moneda()),
                 categoriaId);
+
+        if (request.imagenes() != null && !request.imagenes().isEmpty()) {
+            request.imagenes().stream()
+                    .sorted(Comparator.comparing(ImagenRequest::orden))
+                    .forEach(img -> producto.agregarImagen(new Imagen(img.url(), img.altText(), img.orden())));
+        }
         return productoRepository.save(producto).toResponse();
     }
 
@@ -67,6 +74,15 @@ public class ProductoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado"));
 
         producto.actualizar(request.nombre(), request.descripcion(), new Money(request.precio(), request.moneda()));
+
+        // Si se envía el campo imagenes, se toma como reemplazo total.
+        if (request.imagenes() != null) {
+            // JPA maneja ElementCollection: reemplazamos la lista.
+            producto.getImagenes().clear();
+            request.imagenes().stream()
+                    .sorted(Comparator.comparing(ImagenRequest::orden))
+                    .forEach(img -> producto.agregarImagen(new Imagen(img.url(), img.altText(), img.orden())));
+        }
         return productoRepository.save(producto).toResponse();
     }
 
@@ -92,4 +108,3 @@ public class ProductoService {
     }
 
 }
-

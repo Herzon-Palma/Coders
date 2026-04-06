@@ -57,7 +57,8 @@ public class ProductoControllerIT {
                 "LAP-001",
                 BigDecimal.valueOf(1500.00),
                 "MXN",
-                categoriaId.getValue());
+                categoriaId.getValue(),
+                null);
 
         ResponseEntity<ProductoResponse> response = restTemplate.postForEntity(
                 "/api/v1/productos",
@@ -92,7 +93,7 @@ public class ProductoControllerIT {
         productoRepository.save(new Producto(pId, "Teclado", "Mecánico", "TEC-001", Money.pesos(50), catId));
 
         ProductoRequest updateRequest = new ProductoRequest(
-                "Teclado RGB", "Mecánico Gamer", "TEC-001", BigDecimal.valueOf(70), "MXN", catId.getValue());
+                "Teclado RGB", "Mecánico Gamer", "TEC-001", BigDecimal.valueOf(70), "MXN", catId.getValue(), null);
 
         HttpEntity<ProductoRequest> requestEntity = new HttpEntity<>(updateRequest);
         ResponseEntity<ProductoResponse> response = restTemplate.exchange(

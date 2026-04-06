@@ -28,9 +28,13 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 
 import com.uamishop.ordenes.controller.OrdenResponse;
+import com.uamishop.ordenes.controller.OrdenResponse.ItemOrdenResponse;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -160,11 +164,17 @@ public class OrdenService {
 
         
 
+        // Enriquecer items con nombre/imagen actual del catálogo para consumo UI.
+        List<ItemOrdenResponse> enriched = enrichItemsFromCatalog(
+                itemsDto.stream()
+                        .map(i -> new ItemSnapshot(i.productoId(), null, null, i.cantidad()))
+                        .toList());
+
         return new OrdenResponse(
                 ordenCreada.getId().id(),
                 ordenCreada.getEstado().name(),
                 ordenCreada.getClienteId().getId(),
-                itemsDto);
+                enriched);
     }
 
     public Orden confirmarOrden(UUID ordenId) {
@@ -213,14 +223,72 @@ public class OrdenService {
     public List<OrdenResponse> buscarPorCliente(UUID clienteId) {
         return repository.findByClienteId(new ClienteId(clienteId))
                 .stream()
-                .map(orden -> new OrdenResponse(
-                        orden.getId().id(),
-                        orden.getEstado().name(),
-                        orden.getClienteId().getId(),
-                        orden.getItems().stream()
-                                .map(item -> new ItemDto(item.getProductoRef().productoid().getValue(), item.getCantidad().intValue()))
-                                .collect(Collectors.toList())))
+                .map(orden -> {
+                    List<ItemSnapshot> snapshots = orden.getItems().stream()
+                            .map(item -> new ItemSnapshot(
+                                    item.getProductoRef().productoid().getValue(),
+                                    item.getProductoRef().sku(),
+                                    item.getProductoRef().nombreProducto(),
+                                    item.getCantidad().intValue()))
+                            .toList();
+
+                    List<ItemOrdenResponse> enriched = enrichItemsFromCatalog(snapshots);
+
+                    return new OrdenResponse(
+                            orden.getId().id(),
+                            orden.getEstado().name(),
+                            orden.getClienteId().getId(),
+                            enriched);
+                })
                 .collect(Collectors.toList());
+    }
+
+
+    private record ItemSnapshot(UUID productoId, String skuSnapshot, String nombreSnapshot, int cantidad) {
+    }
+
+    private List<ItemOrdenResponse> enrichItemsFromCatalog(List<ItemSnapshot> items) {
+        // Dedup por productoId para minimizar llamadas
+        Map<UUID, Optional<ProductoResumen>> cache = new HashMap<>();
+        for (ItemSnapshot it : items) {
+            cache.computeIfAbsent(it.productoId(), pid -> catalogoApi.buscarProducto(pid));
+        }
+
+        return items.stream().map(it -> {
+            Optional<ProductoResumen> prodOpt = cache.getOrDefault(it.productoId(), Optional.empty());
+
+            String nombre = it.nombreSnapshot;
+            String sku = it.skuSnapshot;
+            String imagenUrl = null;
+
+            if (prodOpt != null && prodOpt.isPresent()) {
+                ProductoResumen p = prodOpt.get();
+                if (p.nombre() != null && !p.nombre().isBlank()) {
+                    nombre = p.nombre();
+                }
+                if (p.sku() != null && !p.sku().isBlank()) {
+                    sku = p.sku();
+                }
+                if (p.imagenes() != null && !p.imagenes().isEmpty()) {
+                    imagenUrl = p.imagenes().stream()
+                            .sorted(Comparator.comparing(img -> img.orden() == null ? Integer.MAX_VALUE : img.orden()))
+                            .map(img -> img.url())
+                            .filter(u -> u != null && !u.isBlank())
+                            .findFirst()
+                            .orElse(null);
+                }
+            }
+
+            // Último fallback para no romper UI
+            if (nombre == null || nombre.isBlank()) {
+                nombre = "Producto";
+            }
+            if (sku == null) {
+                sku = "";
+            }
+
+            return new ItemOrdenResponse(it.productoId(), sku, nombre, it.cantidad(), imagenUrl);
+        }).toList();
     }
 
 

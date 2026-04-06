@@ -1,6 +1,7 @@
 package com.uamishop.catalogo.controller.dto;
 import java.math.BigDecimal;
 import java.util.UUID;
+import java.util.List;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -25,6 +26,9 @@ public record ProductoResponse(
     UUID categoriaid,
 
     @Schema(description = "Disponibilidad del producto")
-    boolean disponible) {
+    boolean disponible,
+
+    @Schema(description = "Imágenes del producto")
+    List<ImagenResponse> imagenes) {
 
 }

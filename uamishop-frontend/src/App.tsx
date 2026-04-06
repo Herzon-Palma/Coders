@@ -1,4 +1,4 @@
-import { useState, useEffect, Component } from 'react';
+import { useState, useEffect, Component, useMemo } from 'react';
 import './index.css';
 import { api } from './api';
 
@@ -8,11 +8,36 @@ class ErrorBoundary extends Component<any, any> {
   render() { if (this.state.hasError) return <div style={{color:'red', padding:'50px'}}><pre>{this.state.errorStr}</pre></div>; return this.props.children; }
 }
 
+// ─── Helpers de categoría ────────────────────────────────────────────────────
+async function fetchCategoryMap(baseUrl: string): Promise<Map<string, string>> {
+  try {
+    const res = await fetch(`${baseUrl}/catalogo/api/v1/categorias`);
+    if (!res.ok) return new Map();
+    const cats: { id: string; nombre: string }[] = await res.json();
+    return new Map(cats.map(c => [c.id, c.nombre]));
+  } catch {
+    return new Map();
+  }
+}
+
+// Emojis por nombre de categoría (fallback genérico)
+const CATEGORY_ICONS: Record<string, string> = {
+  'Computación': '💻',
+  'Electrónica': '⚡',
+  'Ropa': '👕',
+  'Útiles': '📐',
+};
+
+function getCategoryIcon(nombre: string): string {
+  return CATEGORY_ICONS[nombre] ?? '🛍️';
+}
+
 function MainApp() {
   const [products, setProducts] = useState<any[]>([]);
   const [cart, setCart] = useState<any>(null);
   const [myOrders, setMyOrders] = useState<any[]>([]);
   const [currentView, setCurrentView] = useState<'CATALOG' | 'ORDERS'>('CATALOG');
+  const [activeCategory, setActiveCategory] = useState<string>('Todos');
 
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState('');
@@ -30,6 +55,16 @@ function MainApp() {
   });
 
   const CLIENT_ID = '123e4567-e89b-12d3-a456-426614174000';
+
+  // UX: cerrar modal con Escape
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsModalOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isModalOpen]);
 
   useEffect(() => {
     initialize();
@@ -62,18 +97,27 @@ function MainApp() {
     try {
       let prods = await api.getProducts();
       
-      // If no products, seed some!
-      if (prods.length === 0) {
+      if (prods.length < 15) {
         showNotification('Inicializando catálogo...');
         await api.seedProducts();
         prods = await api.getProducts();
-      } else {
+      }
+
+      try {
         await api.activateAllProducts(prods);
         prods = await api.getProducts();
+      } catch (e) {
+        console.warn('Activate all products failed (some may lack images):', e);
       }
-      setProducts(prods);
 
-      // Create or get cart
+      // Enriquecer productos con el nombre de su categoría
+      const catMap = await fetchCategoryMap('http://localhost:8080');
+      const enriched = prods.map((p: any) => ({
+        ...p,
+        categoriaNombre: catMap.get(p.categoriaid) ?? 'Sin categoría',
+      }));
+      setProducts(enriched);
+
       const cartData = await api.createCart(CLIENT_ID);
       setCart(cartData);
     } catch (error) {
@@ -98,16 +142,13 @@ function MainApp() {
 
   const handleCheckout = async () => {
     try {
-      // Paso 1: mover el carrito a estado CHECKOUT
       await api.initCartCheckout(cart.id);
-      // Paso 2: crear la orden desde el carrito en CHECKOUT
       await api.checkoutCart(CLIENT_ID, address);
       
       showNotification('✅ ¡Orden creada exitosamente!');
       setIsModalOpen(false);
-      setCurrentView('ORDERS'); // Te lleva a ver tu compra
+      setCurrentView('ORDERS');
       
-      // Crear nuevo carrito vacío
       const newCart = await api.createCart(CLIENT_ID);
       setCart(newCart);
     } catch (error: any) {
@@ -116,8 +157,41 @@ function MainApp() {
     }
   };
 
+  // ─── Agrupación y filtrado por categoría ───────────────────────────────────
+  const categories = useMemo(() => {
+    const names = new Set<string>();
+    for (const p of products) {
+      const cat = p?.categoriaNombre || p?.categoria?.nombre || 'Sin categoría';
+      names.add(cat);
+    }
+    return ['Todos', ...Array.from(names)];
+  }, [products]);
+
+  const groupedProducts = useMemo(() => {
+    const byCategory: Record<string, any[]> = {};
+    for (const p of products) {
+      const cat = p?.categoriaNombre || p?.categoria?.nombre || 'Sin categoría';
+      if (!byCategory[cat]) byCategory[cat] = [];
+      byCategory[cat].push(p);
+    }
+    return byCategory;
+  }, [products]);
+
+  const filteredGroups = useMemo(() => {
+    if (activeCategory === 'Todos') return groupedProducts;
+    return { [activeCategory]: groupedProducts[activeCategory] ?? [] };
+  }, [activeCategory, groupedProducts]);
+  // ──────────────────────────────────────────────────────────────────────────
+
   if (loading) {
-    return <div className="loading">Sincronizando con UamiShop...</div>;
+    return (
+      <div className="loading">
+        <div className="loading-content">
+          <div className="loading-spinner" />
+          <span>Sincronizando con UamiShop...</span>
+        </div>
+      </div>
+    );
   }
 
   const cartItemsCount = cart?.items?.reduce((acc: number, item: any) => acc + Number(item.cantidad), 0) || 0;
@@ -140,8 +214,10 @@ function MainApp() {
           >
             Mis Órdenes
           </button>
-          <button className="action-button" onClick={() => setIsModalOpen(true)}>
-            Carrito ({cartItemsCount})
+          <button className="action-button cart-btn" onClick={() => setIsModalOpen(true)}>
+            <span className="cart-icon">🛒</span>
+            <span>Carrito</span>
+            {cartItemsCount > 0 && <span className="cart-badge">{cartItemsCount}</span>}
           </button>
         </div>
       </header>
@@ -149,25 +225,66 @@ function MainApp() {
       <main>
         {currentView === 'CATALOG' && (
           <>
-            <h2 style={{ marginBottom: '24px', fontWeight: 300, color: 'var(--text-secondary)' }}>Nuestros Productos Premium</h2>
-            <div className="product-grid">
-              {products.map(product => (
-                <div key={product.id} className="glass-panel product-card">
-                  <div className="product-image">
-                    <span style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-secondary)' }}>
-                       {product && product.nombre ? String(product.nombre).substring(0, 3).toUpperCase() : 'PRO'}
-                    </span>
-                  </div>
-                  <div className="product-info">
-                    <div className="product-name">{product.nombre}</div>
-                    <div className="product-price">${Number(product.precio?.monto || product.precio).toLocaleString()} {product.precio?.moneda || 'MXN'}</div>
-                    <button className="action-button" onClick={() => handleAddToCart(product.id)}>
-                      Añadir a Carrito
-                    </button>
-                  </div>
-                </div>
+            {/* Barra de filtro por categoría */}
+            <div className="category-filter-bar">
+              {categories.map(cat => (
+                <button
+                  key={cat}
+                  className={`category-pill ${activeCategory === cat ? 'active' : ''}`}
+                  onClick={() => setActiveCategory(cat)}
+                >
+                  {cat !== 'Todos' && <span>{getCategoryIcon(cat)}</span>}
+                  {cat}
+                </button>
               ))}
             </div>
+
+            {/* Secciones por categoría */}
+            {Object.entries(filteredGroups).map(([catName, prods]) => (
+              <section key={catName} className="category-section">
+                <div className="category-section-header">
+                  <span className="category-section-icon">{getCategoryIcon(catName)}</span>
+                  <h2 className="category-section-title">{catName}</h2>
+                  <span className="category-section-count">{prods.length} producto{prods.length !== 1 ? 's' : ''}</span>
+                </div>
+                <div className="product-grid">
+                  {prods.map(product => (
+                    <div key={product.id} className="glass-panel product-card">
+                      <div className="product-image" aria-label={product?.nombre || 'Producto'}>
+                        {product?.imagenes?.[0]?.url ? (
+                          <img
+                            src={product.imagenes[0].url}
+                            alt={product.imagenes?.[0]?.altText || product.nombre || 'Producto'}
+                            loading="lazy"
+                            onError={(e) => {
+                              const el = e.currentTarget;
+                              el.style.display = 'none';
+                              const parent = el.parentElement;
+                              if (parent) parent.classList.add('image-fallback');
+                            }}
+                          />
+                        ) : (
+                          <span className="product-image-fallback">
+                            {product?.nombre ? String(product.nombre).substring(0, 3).toUpperCase() : 'PRO'}
+                          </span>
+                        )}
+                        <div className="product-category-badge">
+                          {getCategoryIcon(catName)} {catName}
+                        </div>
+                      </div>
+                      <div className="product-info">
+                        <div className="product-name">{product.nombre}</div>
+                        <div className="product-desc">{product.descripcion}</div>
+                        <div className="product-price">${Number(product.precio?.monto || product.precio).toLocaleString()} <span className="product-currency">{product.precio?.moneda || 'MXN'}</span></div>
+                        <button className="action-button add-to-cart-btn" onClick={() => handleAddToCart(product.id)}>
+                          + Añadir al Carrito
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
           </>
         )}
 
@@ -176,20 +293,46 @@ function MainApp() {
             <h2 style={{ marginBottom: '24px', fontWeight: 300, color: 'var(--text-secondary)' }}>Historial de Órdenes</h2>
             <div className="orders-list">
               {!Array.isArray(myOrders) || myOrders.length === 0 ? (
-                <div className="glass-panel" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                  Aún no tienes órdenes registradas.
+                <div className="glass-panel empty-state">
+                  <div className="empty-state-icon">📦</div>
+                  <div className="empty-state-text">Aún no tienes órdenes registradas.</div>
+                  <button className="action-button" onClick={() => setCurrentView('CATALOG')}>
+                    Ir al Catálogo
+                  </button>
                 </div>
               ) : (
                 [...myOrders].reverse().map((orden, index) => (
                   <div key={orden?.ordenId || index} className="glass-panel order-card">
                     <div className="order-header">
-                      <span className="order-id">#{orden?.ordenId || 'N/A'}</span>
+                      <span className="order-title">Orden #{myOrders.length - index}</span>
                       <span className={`order-status status-${orden?.estadoOrden}`}>{orden?.estadoOrden ? String(orden.estadoOrden).replace('_', ' ') : 'N/A'}</span>
                     </div>
                     <div className="order-items">
                       {Array.isArray(orden?.items) && orden.items.map((item: any, idx: number) => (
-                        <div key={idx} className="order-item-chip">
-                          Prod: {item?.productoId ? String(item.productoId).substring(0,6) : '???'}... (x{item?.cantidad || 0})
+                        <div key={idx} className="order-item">
+                          <div className="order-item-thumb">
+                            {item?.imagenUrl ? (
+                              <img
+                                src={item.imagenUrl}
+                                alt={item?.nombreProducto || 'Producto'}
+                                loading="lazy"
+                                onError={(e) => {
+                                  const el = e.currentTarget;
+                                  el.style.display = 'none';
+                                  const parent = el.parentElement;
+                                  if (parent) parent.classList.add('image-fallback');
+                                }}
+                              />
+                            ) : (
+                              <span className="order-item-fallback">
+                                {item?.nombreProducto ? String(item.nombreProducto).substring(0, 2).toUpperCase() : 'PR'}
+                              </span>
+                            )}
+                          </div>
+                          <div className="order-item-meta">
+                            <div className="order-item-name">{item?.nombreProducto || 'Producto'}</div>
+                            <div className="order-item-sub">x{item?.cantidad || 0}{item?.sku ? ` · ${item.sku}` : ''}</div>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -210,7 +353,10 @@ function MainApp() {
             </div>
             
             {cart?.items?.length === 0 ? (
-              <p style={{ color: 'var(--text-secondary)' }}>Tu carrito está vacío. Agrega productos desde el catálogo.</p>
+              <div className="empty-cart">
+                <div className="empty-state-icon">🛒</div>
+                <p style={{ color: 'var(--text-secondary)' }}>Tu carrito está vacío. Agrega productos desde el catálogo.</p>
+              </div>
             ) : (
               <div>
                 <div style={{ maxHeight: '200px', overflowY: 'auto', marginBottom: '24px' }}>

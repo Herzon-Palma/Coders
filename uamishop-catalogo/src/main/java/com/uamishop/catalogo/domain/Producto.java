@@ -6,8 +6,10 @@ import com.uamishop.shared.domain.Productoid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.Comparator;
 import jakarta.persistence.*;
 import com.uamishop.catalogo.controller.dto.ProductoResponse;
+import com.uamishop.catalogo.controller.dto.ImagenResponse;
 import com.uamishop.shared.domain.exception.DomainException;
 
 @Entity
@@ -85,6 +87,9 @@ public class Producto {
     }
 
     public void activar() {
+        if (this.imagenes == null || this.imagenes.isEmpty()) {
+            throw new DomainException("El producto debe tener al menos 1 imagen para activarse");
+        }
         if (precio.cantidad().compareTo(java.math.BigDecimal.ZERO) <= 0)
             throw new DomainException("Precio debe ser mayor a cero");
         this.disponible = true;
@@ -109,6 +114,12 @@ public class Producto {
     }
 
     public ProductoResponse toResponse() {
+        List<ImagenResponse> imgs = (this.imagenes == null)
+                ? List.of()
+                : this.imagenes.stream()
+                        .sorted(Comparator.comparing(Imagen::orden))
+                        .map(i -> new ImagenResponse(i.url(), i.altText(), i.orden()))
+                        .toList();
         return new ProductoResponse(
                 this.id.valor(),
                 this.nombre,
@@ -117,7 +128,8 @@ public class Producto {
                 this.precio.cantidad(),
                 this.precio.moneda(),
                 this.categoriaId.valor(),
-                this.disponible);
+                this.disponible,
+                imgs);
     }
 
     public void actualizar(String nombre, String descripcion, Money precio) {
